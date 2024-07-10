@@ -71,7 +71,7 @@
 }
 .gantt-container .grid-header {
   background-color: #ffffff;
-  position: sticky;
+  position: absolute;
   top: 0;
   left: 0;
   z-index: 10;
@@ -152,7 +152,7 @@
 .gantt {
   user-select: none;
   -webkit-user-select: none;
-  position: absolute;
+  position: relative;
 }
 .gantt .grid-background {
   fill: none;
@@ -175,7 +175,7 @@
   fill: #F9FAFA;
 }
 .gantt .arrow {
-  fill: none;
+  fill: #9FA9B1;
   stroke: #9FA9B1;
   stroke-width: 1;
 }
@@ -217,12 +217,6 @@
 .gantt .bar-wrapper.important .bar-progress {
   fill: #2c94ec;
 }
-.gantt .bar-wrapper.important .bar-label {
-  fill: #fff;
-}
-.gantt .bar-wrapper.important .handle {
-  fill: #94c4f4;
-}
 .gantt .bar-wrapper.important .handle.progress {
   fill: #fff;
 }
@@ -240,7 +234,7 @@
   cursor: pointer;
   outline: none;
 }
-.gantt .bar-wrapper.active .handle {
+.gantt .bar-wrapper.active .handle, .gantt .bar-wrapper:hover .handle {
   visibility: visible;
   opacity: 1;
 }
@@ -263,7 +257,6 @@
   position: relative;
   overflow: auto;
   font-size: 12px;
-  height: 500px;
 }
 .gantt-container .popup-wrapper {
   position: absolute;

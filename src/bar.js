@@ -221,10 +221,10 @@ export default class Bar {
     if (this.invalid || this.gantt.options.readonly) return;
 
     const bar = this.$bar;
-    const handle_width = 8;
+    const handle_width = this.gantt.options.handle_width;
 
     createSVG("rect", {
-      x: bar.getX() + bar.getWidth() + handle_width - 4,
+      x: bar.getX() + bar.getWidth() - handle_width - 1,
       y: bar.getY() + 1,
       width: handle_width,
       height: this.height - 2,
@@ -235,7 +235,7 @@ export default class Bar {
     });
 
     createSVG("rect", {
-      x: bar.getX() - handle_width - 4,
+      x: bar.getX() + 1,
       y: bar.getY() + 1,
       width: handle_width,
       height: this.height - 2,
@@ -596,12 +596,14 @@ export default class Bar {
   update_handle_position() {
     if (this.invalid || this.gantt.options.readonly) return;
     const bar = this.$bar;
+    const handle_width = this.gantt.options.handle_width;
+
     this.handle_group
       .querySelector(".handle.left")
-      .setAttribute("x", bar.getX() - 12);
+      .setAttribute("x", bar.getX() + 1);
     this.handle_group
       .querySelector(".handle.right")
-      .setAttribute("x", bar.getEndX() + 4);
+      .setAttribute("x", bar.getEndX() - handle_width - 1);
     const handle = this.group.querySelector(".handle.progress");
     handle && handle.setAttribute("points", this.get_progress_polygon_points());
   }

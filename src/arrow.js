@@ -11,84 +11,65 @@ export default class Arrow {
   }
 
   calculate_path() {
-    let start_x =
-      this.from_task.$bar.getX() + this.from_task.$bar.getWidth() / 2;
+    const rowHeight = this.gantt.options.bar_height + this.gantt.options.padding; // 48
+    const taskHeight = this.gantt.options.bar_height; // 30
+    const arrowCurve = this.gantt.options.arrow_curve; // 5
+    const arrowIndent = this.gantt.options.column_width / 2;
+    const taskFrom = this.from_task;
+    const taskTo = this.to_task;
 
-    const condition = () =>
-      this.to_task.$bar.getX() < start_x + this.gantt.options.padding &&
-      start_x > this.from_task.$bar.getX() + this.gantt.options.padding;
+    const taskFromX2 = taskFrom.$bar.getEndX();
+    const taskFromY1 = taskFrom.$bar.getY();
+    const taskToX1 = taskTo.$bar.getX();
+    const taskToY1 = taskTo.$bar.getY();
 
-    while (condition()) {
-      start_x -= 10;
-    }
+    const indexCompare = taskFrom.task._index > taskTo.task._index ? -1 : 1;
+    const taskToEndPosition = taskToY1 + taskHeight / 2;
+    const taskFromEndPosition = taskFromX2 + arrowIndent * 2;
 
-    const start_y =
-      this.gantt.options.header_height +
-      this.gantt.options.bar_height +
-      (this.gantt.options.padding + this.gantt.options.bar_height) *
-      this.from_task.task._index +
-      this.gantt.options.padding;
+    const taskFromHorizontalOffsetValue =
+        taskFromEndPosition < taskToX1 ? '' : `H ${taskToX1 - arrowIndent}`;
+    const taskToHorizontalOffsetValue =
+        taskFromEndPosition > taskToX1
+            ? arrowIndent
+            : taskToX1 - taskFromX2 - arrowIndent;
 
-    const end_x = this.to_task.$bar.getX() - this.gantt.options.padding / 2 - 7;
-    const end_y =
-      this.gantt.options.header_height +
-      this.gantt.options.bar_height / 2 +
-      (this.gantt.options.padding + this.gantt.options.bar_height) *
-      this.to_task.task._index +
-      this.gantt.options.padding;
+    const path = `M ${taskFromX2} ${taskFromY1 + taskHeight / 2}
+    h ${arrowIndent}
+    v ${(indexCompare * rowHeight) / 2}
+    ${taskFromHorizontalOffsetValue}
+    V ${taskToEndPosition}
+    h ${taskToHorizontalOffsetValue}`;
 
-    const from_is_below_to =
-      this.from_task.task._index > this.to_task.task._index;
-    const curve = this.gantt.options.arrow_curve;
-    const clockwise = from_is_below_to ? 1 : 0;
-    const curve_y = from_is_below_to ? -curve : curve;
-    const offset = from_is_below_to
-      ? end_y + this.gantt.options.arrow_curve
-      : end_y - this.gantt.options.arrow_curve;
+    const trianglePoints = `${taskToX1},${taskToEndPosition}
+    ${taskToX1 - arrowCurve},${taskToEndPosition - arrowCurve}
+    ${taskToX1 - arrowCurve},${taskToEndPosition + arrowCurve}`;
 
-    this.path = `
-            M ${start_x} ${start_y}
-            V ${offset}
-            a ${curve} ${curve} 0 0 ${clockwise} ${curve} ${curve_y}
-            L ${end_x} ${end_y}
-            m -5 -5
-            l 5 5
-            l -5 5`;
+    this.path = path;
 
-    if (
-      this.to_task.$bar.getX() <
-      this.from_task.$bar.getX() + this.gantt.options.padding
-    ) {
-      const down_1 = this.gantt.options.padding / 2 - curve;
-      const down_2 =
-        this.to_task.$bar.getY() + this.to_task.$bar.getHeight() / 2 - curve_y;
-      const left = this.to_task.$bar.getX() - this.gantt.options.padding;
-
-      this.path = `
-                M ${start_x} ${start_y}
-                v ${down_1}
-                a ${curve} ${curve} 0 0 1 -${curve} ${curve}
-                H ${left}
-                a ${curve} ${curve} 0 0 ${clockwise} -${curve} ${curve_y}
-                V ${down_2}
-                a ${curve} ${curve} 0 0 ${clockwise} ${curve} ${curve_y}
-                L ${end_x} ${end_y}
-                m -5 -5
-                l 5 5
-                l -5 5`;
-    }
+    this.points = trianglePoints;
   }
 
   draw() {
-    this.element = createSVG("path", {
-      d: this.path,
+    this.element = createSVG("g", {
       "data-from": this.from_task.task.id,
       "data-to": this.to_task.task.id,
+    });
+
+    this.svgPath = createSVG("path", {
+      d: this.path,
+      fill: "none",
+      append_to: this.element
+    });
+    this.svgPolygon = createSVG("polygon", {
+      points: this.points,
+      append_to: this.element,
     });
   }
 
   update() {
     this.calculate_path();
-    this.element.setAttribute("d", this.path);
+    this.svgPath.setAttribute("d", this.path);
+    this.svgPolygon.setAttribute("points", this.points);
   }
 }

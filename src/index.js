@@ -34,8 +34,9 @@ const DEFAULT_OPTIONS = {
   bar_height: 30,
   bar_corner_radius: 3,
   arrow_curve: 5,
+  handle_width: 8,
   padding: 18,
-  view_mode: "Day",
+  view_mode: VIEW_MODE.DAY,
   date_format: "YYYY-MM-DD",
   popup_trigger: "click",
   show_expected_progress: false,
@@ -391,7 +392,7 @@ export default class Gantt {
     });
 
     $.attr(this.$svg, {
-      height: grid_height + this.options.padding + 100,
+      height: grid_height ,
       width: "100%",
     });
   }
@@ -886,16 +887,21 @@ export default class Gantt {
       }
 
       bar_wrapper.classList.add("active");
-      this.popup.parent.classList.add('hidden')
+      if (this.popup) {
+        this.popup.parent.classList.add('hidden');
+      }
 
       x_on_start = e.offsetX;
       y_on_start = e.offsetY;
 
       parent_bar_id = bar_wrapper.getAttribute("data-id");
       const ids = [
-        parent_bar_id,
-        ...this.get_all_dependent_tasks(parent_bar_id),
+        parent_bar_id
       ];
+      // drag sync children
+      if (this.options.dependency) {
+        ids.push(...this.get_all_dependent_tasks(parent_bar_id));
+      }
       bars = ids.map((id) => this.get_bar(id));
 
       this.bar_being_dragged = parent_bar_id;
@@ -971,6 +977,8 @@ export default class Gantt {
         $bar.finaldx = this.get_snap_position(dx);
         this.hide_popup();
         if (is_resizing_left) {
+          // 左不能大于右
+          if ($bar.finaldx - $bar.owidth >= 0) return;
           if (parent_bar_id === bar.task.id) {
             bar.update_bar_position({
               x: $bar.ox + $bar.finaldx,
@@ -982,6 +990,8 @@ export default class Gantt {
             });
           }
         } else if (is_resizing_right) {
+          // 右不能小于左
+          if ($bar.finaldx + $bar.owidth < 0) return;
           if (parent_bar_id === bar.task.id) {
             bar.update_bar_position({
               width: $bar.owidth + $bar.finaldx,
@@ -1121,7 +1131,9 @@ export default class Gantt {
     [...this.$svg.querySelectorAll(".bar-wrapper")].forEach((el) => {
       el.classList.remove("active");
     });
-    this.popup.parent.classList.remove('hidden')
+    if (this.popup) {
+      this.popup.parent.classList.remove('hidden');
+    }
   }
 
   view_is(modes) {
