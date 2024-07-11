@@ -154,8 +154,6 @@ export default class Bar {
     this.$date_highlight = $date_highlight
     this.gantt.$lower_header.prepend($date_highlight)
 
-
-
     animateSVG(this.$bar_progress, "width", 0, this.progress_width);
   }
 
@@ -163,7 +161,7 @@ export default class Bar {
     let x_coord = this.x + this.$bar.getWidth() / 2;
 
     if (this.task.thumbnail) {
-      x_coord = this.x + this.image_size + 5;
+      x_coord = this.x + 10 + this.image_size + 5;
     }
 
     createSVG("text", {
@@ -463,6 +461,10 @@ export default class Bar {
     this.expected_progress =
       date_utils.diff(date_utils.today(), this.task._start, "hour") /
       this.gantt.options.step;
+    // 未到当前日期
+    if (this.expected_progress < 0) {
+      this.expected_progress = 0;
+    }
     this.expected_progress =
       ((this.expected_progress < this.duration
         ? this.expected_progress
@@ -568,25 +570,25 @@ export default class Bar {
       img = this.group.querySelector('.bar-img');
 
 
-    let padding = 5;
-    let x_offset_label_img = this.image_size + 10;
+    let padding = 10;
+    let x_offset_label_img = this.image_size + 5;
     const labelWidth = label.getBBox().width
     const barWidth = bar.getWidth()
     if (labelWidth > barWidth) {
       label.classList.add("big");
       if (img) {
-        img.setAttribute('x', bar.getX() + bar.getWidth() + padding);
-        img_mask.setAttribute('x', bar.getX() + bar.getWidth() + padding);
-        label.setAttribute('x', bar.getX() + bar.getWidth() + x_offset_label_img);
+        img.setAttribute('x', bar.getX() + barWidth + padding);
+        img_mask.setAttribute('x', bar.getX() + barWidth + padding);
+        label.setAttribute('x', bar.getX() + barWidth + x_offset_label_img);
       } else {
-        label.setAttribute('x', bar.getX() + bar.getWidth() + padding);
+        label.setAttribute('x', bar.getX() + barWidth + padding);
       }
     } else {
       label.classList.remove("big");
       if (img) {
         img.setAttribute('x', bar.getX() + padding);
         img_mask.setAttribute('x', bar.getX() + padding);
-        label.setAttribute('x', bar.getX() + barWidth / 2 + x_offset_label_img);
+        label.setAttribute('x', bar.getX() + padding + x_offset_label_img);
       } else {
         label.setAttribute('x', bar.getX() + barWidth / 2 - labelWidth / 2);
       }

@@ -154,9 +154,11 @@ export default class Gantt {
 
       // invalid dates
       if (!task.start && !task.end) {
-        const today = date_utils.today();
-        task._start = today;
-        task._end = date_utils.add(today, 2, "day");
+        task._start = null;
+        task._end = null;
+        // const today = date_utils.today();
+        // task._start = today;
+        // task._end = date_utils.add(today, 2, "day");
       }
 
       if (!task.start && task.end) {
@@ -169,9 +171,11 @@ export default class Gantt {
 
       // if hours is not set, assume the last day is full day
       // e.g: 2018-09-09 becomes 2018-09-09 23:59:59
-      const task_end_values = date_utils.get_date_values(task._end);
-      if (task_end_values.slice(3).every((d) => d === 0)) {
-        task._end = date_utils.add(task._end, 24, "hour");
+      if (task._end) {
+        const task_end_values = date_utils.get_date_values(task._end);
+        if (task_end_values.slice(3).every((d) => d === 0)) {
+          task._end = date_utils.add(task._end, 24, "hour");
+        }
       }
 
       // invalid flag
@@ -265,10 +269,10 @@ export default class Gantt {
 
     for (let task of this.tasks) {
       // set global start and end date
-      if (!this.gantt_start || task._start < this.gantt_start) {
-        this.gantt_start = task._start;
+      if (!this.gantt_start || (task._start && task._start < this.gantt_start)) {
+          this.gantt_start = task._start;
       }
-      if (!this.gantt_end || task._end > this.gantt_end) {
+      if (!this.gantt_end || (task._end && task._end > this.gantt_end)) {
         this.gantt_end = task._end;
       }
     }
@@ -857,6 +861,56 @@ export default class Gantt {
         this.hide_popup();
       },
     );
+
+    this.bind_bar_create();
+  }
+
+  bind_bar_create() {
+    // 只针对没有任务项的可以创建
+    let x_on_start = 0;
+    let y_on_start = 0;
+    let is_creating = null;
+    let holder = null;
+
+    const radius = this.options.bar_corner_radius;
+    const height = this.options.bar_height;
+    $.on(this.$svg, "mousedown", ".grid-row", (e) => {
+      is_creating = true;
+      x_on_start = e.offsetX;
+      y_on_start = e.offsetY;
+    });
+
+    $.on(this.$svg, "mousemove", (e) => {
+      if (!is_creating) return;
+      let dx = e.offsetX - x_on_start;
+
+      const finaldx = this.get_snap_position(dx);
+      // +1
+      const width = Math.abs(finaldx) + this.options.column_width;
+      // 创建
+      if (!holder) {
+        holder = createSVG('rect', {
+          x: x_on_start,
+          y: y_on_start,
+          width: 0,
+          height: height,
+          rx: radius,
+          ry: radius,
+          class: 'bar-progress',
+          append_to: this.layers.progress,
+        });
+      }
+      // 更新
+      var x = dx < 0 ? x_on_start - width : x_on_start;
+      holder.setAttribute('x', x);
+      holder.setAttribute('width', width);
+    });
+
+    $.on(this.$svg, "mouseup", () => {
+      is_creating = false;
+      // this.layers.progress.removeChild(holder);
+      holder = null;
+    });
   }
 
   bind_bar_events() {
@@ -1192,7 +1246,7 @@ export default class Gantt {
     return this.tasks
       .map((task) => task._start)
       .reduce((prev_date, cur_date) =>
-        cur_date <= prev_date ? cur_date : prev_date,
+        (cur_date && cur_date <= prev_date) ? cur_date : prev_date,
       );
   }
 

@@ -45,6 +45,7 @@
           // Utilizes duration
         	duration: '6d',
         	name: 'Write new content',
+          thumbnail: 'https://www.baidu.com/img/PCtm_d9c8750bed0b3c7d089fa7d55720d6cf.png',
         	id: "Task 1",
         	progress: 5,
           important: true
@@ -66,12 +67,12 @@
         	dependencies: 'Task 2'
         },
         {
-        	start: '2024-04-08',
-        	end: '2024-04-10',
+        	start: '',
+        	end: '',
         	name: 'Deploy',
         	id: "Task 4",
         	progress: 0,
-        	// dependencies: 'Task 2'
+        	dependencies: 'Task 2'
         },
         {
         	start: '2024-07-21',
@@ -116,6 +117,7 @@
         view_mode: "Day",
         view_mode_padding: { DAY: "3d" },
         popup: false,
+        show_expected_progress: true,
         view_mode_select: true,
         // dependency: true, // 子级同步拖拽
         // scroll_to: 'today',

@@ -557,8 +557,6 @@ var Gantt = (function () {
       this.$date_highlight = $date_highlight;
       this.gantt.$lower_header.prepend($date_highlight);
 
-
-
       animateSVG(this.$bar_progress, "width", 0, this.progress_width);
     }
 
@@ -566,7 +564,7 @@ var Gantt = (function () {
       let x_coord = this.x + this.$bar.getWidth() / 2;
 
       if (this.task.thumbnail) {
-        x_coord = this.x + this.image_size + 5;
+        x_coord = this.x + 10 + this.image_size + 5;
       }
 
       createSVG("text", {
@@ -866,6 +864,10 @@ var Gantt = (function () {
       this.expected_progress =
         date_utils.diff(date_utils.today(), this.task._start, "hour") /
         this.gantt.options.step;
+      // 未到当前日期
+      if (this.expected_progress < 0) {
+        this.expected_progress = 0;
+      }
       this.expected_progress =
         ((this.expected_progress < this.duration
           ? this.expected_progress
@@ -971,25 +973,25 @@ var Gantt = (function () {
         img = this.group.querySelector('.bar-img');
 
 
-      let padding = 5;
-      let x_offset_label_img = this.image_size + 10;
+      let padding = 10;
+      let x_offset_label_img = this.image_size + 5;
       const labelWidth = label.getBBox().width;
       const barWidth = bar.getWidth();
       if (labelWidth > barWidth) {
         label.classList.add("big");
         if (img) {
-          img.setAttribute('x', bar.getX() + bar.getWidth() + padding);
-          img_mask.setAttribute('x', bar.getX() + bar.getWidth() + padding);
-          label.setAttribute('x', bar.getX() + bar.getWidth() + x_offset_label_img);
+          img.setAttribute('x', bar.getX() + barWidth + padding);
+          img_mask.setAttribute('x', bar.getX() + barWidth + padding);
+          label.setAttribute('x', bar.getX() + barWidth + x_offset_label_img);
         } else {
-          label.setAttribute('x', bar.getX() + bar.getWidth() + padding);
+          label.setAttribute('x', bar.getX() + barWidth + padding);
         }
       } else {
         label.classList.remove("big");
         if (img) {
           img.setAttribute('x', bar.getX() + padding);
           img_mask.setAttribute('x', bar.getX() + padding);
-          label.setAttribute('x', bar.getX() + barWidth / 2 + x_offset_label_img);
+          label.setAttribute('x', bar.getX() + padding + x_offset_label_img);
         } else {
           label.setAttribute('x', bar.getX() + barWidth / 2 - labelWidth / 2);
         }
@@ -1303,9 +1305,11 @@ var Gantt = (function () {
 
         // invalid dates
         if (!task.start && !task.end) {
-          const today = date_utils.today();
-          task._start = today;
-          task._end = date_utils.add(today, 2, "day");
+          task._start = null;
+          task._end = null;
+          // const today = date_utils.today();
+          // task._start = today;
+          // task._end = date_utils.add(today, 2, "day");
         }
 
         if (!task.start && task.end) {
@@ -1318,9 +1322,11 @@ var Gantt = (function () {
 
         // if hours is not set, assume the last day is full day
         // e.g: 2018-09-09 becomes 2018-09-09 23:59:59
-        const task_end_values = date_utils.get_date_values(task._end);
-        if (task_end_values.slice(3).every((d) => d === 0)) {
-          task._end = date_utils.add(task._end, 24, "hour");
+        if (task._end) {
+          const task_end_values = date_utils.get_date_values(task._end);
+          if (task_end_values.slice(3).every((d) => d === 0)) {
+            task._end = date_utils.add(task._end, 24, "hour");
+          }
         }
 
         // invalid flag
@@ -1414,10 +1420,10 @@ var Gantt = (function () {
 
       for (let task of this.tasks) {
         // set global start and end date
-        if (!this.gantt_start || task._start < this.gantt_start) {
-          this.gantt_start = task._start;
+        if (!this.gantt_start || (task._start && task._start < this.gantt_start)) {
+            this.gantt_start = task._start;
         }
-        if (!this.gantt_end || task._end > this.gantt_end) {
+        if (!this.gantt_end || (task._end && task._end > this.gantt_end)) {
           this.gantt_end = task._end;
         }
       }
@@ -2004,6 +2010,56 @@ var Gantt = (function () {
           this.hide_popup();
         },
       );
+
+      this.bind_bar_create();
+    }
+
+    bind_bar_create() {
+      // 只针对没有任务项的可以创建
+      let x_on_start = 0;
+      let y_on_start = 0;
+      let is_creating = null;
+      let holder = null;
+
+      const radius = this.options.bar_corner_radius;
+      const height = this.options.bar_height;
+      $.on(this.$svg, "mousedown", ".grid-row", (e) => {
+        is_creating = true;
+        x_on_start = e.offsetX;
+        y_on_start = e.offsetY;
+      });
+
+      $.on(this.$svg, "mousemove", (e) => {
+        if (!is_creating) return;
+        let dx = e.offsetX - x_on_start;
+
+        const finaldx = this.get_snap_position(dx);
+        // +1
+        const width = Math.abs(finaldx) + this.options.column_width;
+        // 创建
+        if (!holder) {
+          holder = createSVG('rect', {
+            x: x_on_start,
+            y: y_on_start,
+            width: 0,
+            height: height,
+            rx: radius,
+            ry: radius,
+            class: 'bar-progress',
+            append_to: this.layers.progress,
+          });
+        }
+        // 更新
+        var x = dx < 0 ? x_on_start - width : x_on_start;
+        holder.setAttribute('x', x);
+        holder.setAttribute('width', width);
+      });
+
+      $.on(this.$svg, "mouseup", () => {
+        is_creating = false;
+        // this.layers.progress.removeChild(holder);
+        holder = null;
+      });
     }
 
     bind_bar_events() {
@@ -2339,7 +2395,7 @@ var Gantt = (function () {
       return this.tasks
         .map((task) => task._start)
         .reduce((prev_date, cur_date) =>
-          cur_date <= prev_date ? cur_date : prev_date,
+          (cur_date && cur_date <= prev_date) ? cur_date : prev_date,
         );
     }
 
