@@ -67,14 +67,16 @@
 }
 
 .gantt-container {
-  line-height: 14.5px;
+  line-height: 1px;
 }
 .gantt-container .grid-header {
+  border-bottom: 1px solid #EBEEF0;
   background-color: #ffffff;
   position: absolute;
   top: 0;
   left: 0;
   z-index: 10;
+  line-height: 14.5px;
 }
 .gantt-container .lower-text,
 .gantt-container .upper-text {
@@ -82,7 +84,7 @@
   color: #111;
 }
 .gantt-container .upper-header {
-  height: 40px;
+  height: 35px;
 }
 .gantt-container .lower-header {
   height: 30px;
@@ -104,7 +106,6 @@
 .gantt-container .side-header {
   position: fixed;
   padding: 0 10px;
-  margin-right: 10px;
   background: white;
   line-height: 20px;
   font-weight: 400;

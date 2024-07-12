@@ -894,7 +894,7 @@ var Gantt = (function () {
     compute_y() {
       this.y =
         this.gantt.options.header_height +
-        this.gantt.options.padding +
+        this.gantt.options.padding / 2 +
         this.task._index * (this.height + this.gantt.options.padding);
     }
 
@@ -1180,13 +1180,13 @@ var Gantt = (function () {
   const DEFAULT_OPTIONS = {
     header_height: 65,
     column_width: 30,
-    step: 24,
+    // step: 24,
     view_modes: [...Object.values(VIEW_MODE)],
     bar_height: 30,
     bar_corner_radius: 3,
     arrow_curve: 5,
     handle_width: 8,
-    padding: 18,
+    padding: 38,
     view_mode: VIEW_MODE.DAY,
     date_format: "YYYY-MM-DD",
     popup_trigger: "click",
@@ -1534,7 +1534,7 @@ var Gantt = (function () {
       const grid_width = this.dates.length * this.options.column_width;
       const grid_height =
         this.options.header_height +
-        this.options.padding +
+        12 + // scrollbar-height
         (this.options.bar_height + this.options.padding) * this.tasks.length;
 
       createSVG("rect", {
@@ -1558,7 +1558,7 @@ var Gantt = (function () {
       const row_width = this.dates.length * this.options.column_width;
       const row_height = this.options.bar_height + this.options.padding;
 
-      let row_y = this.options.header_height + this.options.padding / 2;
+      let row_y = this.options.header_height;
 
       for (let _ of this.tasks) {
         createSVG("rect", {
@@ -1579,7 +1579,7 @@ var Gantt = (function () {
       document.querySelector('.grid-header');
 
       let $header = document.createElement("div");
-      $header.style.height = this.options.header_height + 10 + "px";
+      $header.style.height = this.options.header_height + "px";
       $header.style.width = this.dates.length * this.options.column_width + "px";
       $header.classList.add('grid-header');
       this.$header = $header;
@@ -1639,21 +1639,20 @@ var Gantt = (function () {
       this.$header.appendChild($side_header);
       const { left, y } = this.$header.getBoundingClientRect();
       const width = Math.min(this.$header.clientWidth, this.$container.clientWidth);
-      $side_header.style.left = left + this.$container.scrollLeft + width - $side_header.clientWidth + 'px';
+      $side_header.style.left = left + this.$container.scrollLeft + width - $side_header.clientWidth + 1 + 'px';
       $side_header.style.top = y + 10 + 'px';
     }
 
     make_grid_ticks() {
       if (!['both', 'vertical', 'horizontal'].includes(this.options.lines)) return
       let tick_x = 0;
-      let tick_y = this.options.header_height + this.options.padding / 2;
+      let tick_y = this.options.header_height;
       let tick_height =
         (this.options.bar_height + this.options.padding) * this.tasks.length;
 
       let $lines_layer = createSVG("g", { class: 'lines_layer', append_to: this.layers.grid });
 
-
-      let row_y = this.options.header_height + this.options.padding / 2;
+      let row_y = this.options.header_height;
 
       const row_width = this.dates.length * this.options.column_width;
       const row_height = this.options.bar_height + this.options.padding;
@@ -1715,7 +1714,7 @@ var Gantt = (function () {
           const height = (this.options.bar_height + this.options.padding) * this.tasks.length;
           createSVG('rect', {
             x,
-            y: this.options.header_height + this.options.padding / 2,
+            y: this.options.header_height,
             width: (this.view_is('Day') ? 1 : 2) * this.options.column_width,
             height,
             class: 'holiday-highlight',
@@ -1773,7 +1772,7 @@ var Gantt = (function () {
       ) {
         // Used as we must find the _end_ of session if view is not Day
         const { x: left, date } = this.computeGridHighlightDimensions(this.options.view_mode);
-        const top = this.options.header_height + this.options.padding / 2;
+        const top = this.options.header_height;
         const height = (this.options.bar_height + this.options.padding) * this.tasks.length;
         this.$current_highlight = this.create_el({ top, left, height, classes: 'current-highlight', append_to: this.$container });
         let $today = document.getElementById(date_utils.format(date).replaceAll(' ', '_'));
@@ -2023,10 +2022,13 @@ var Gantt = (function () {
 
       const radius = this.options.bar_corner_radius;
       const height = this.options.bar_height;
+
       $.on(this.$svg, "mousedown", ".grid-row", (e) => {
         is_creating = true;
-        x_on_start = e.offsetX;
-        y_on_start = e.offsetY;
+        console.log('ddd ==> offset-x, offset-y', e.offsetX, e.offsetY);
+        // 判断所在选区
+        [x_on_start, y_on_start] = this.get_snap_coord(e.offsetX, e.offsetY);
+        console.log('ddd ==> start-x, start-y', x_on_start, y_on_start);
       });
 
       $.on(this.$svg, "mousemove", (e) => {
@@ -2034,8 +2036,8 @@ var Gantt = (function () {
         let dx = e.offsetX - x_on_start;
 
         const finaldx = this.get_snap_position(dx);
-        // +1
-        const width = Math.abs(finaldx) + this.options.column_width;
+        // 区块
+        const width = Math.abs(finaldx);
         // 创建
         if (!holder) {
           holder = createSVG('rect', {
@@ -2328,6 +2330,14 @@ var Gantt = (function () {
           (rem < this.options.column_width / 2 ? 0 : this.options.column_width);
       }
       return position;
+    }
+
+    get_snap_coord(ox, oy) {
+      this.options.header_height;
+      (this.options.bar_height + this.options.padding) * this.tasks.length;
+
+      console.log('ddd ==> bars', this.bars);
+      return [ox, oy];
     }
 
     unselect_all() {

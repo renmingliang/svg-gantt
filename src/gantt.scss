@@ -22,14 +22,16 @@ $dark-blue: #2c94ec !default;
 
 
 .gantt-container {
-  line-height: 14.5px;
+  line-height: 1px;
 
   .grid-header {
+    border-bottom: 1px solid $stroke-color;
     background-color: #ffffff;
     position: absolute;
     top: 0;
     left: 0;
     z-index: 10;
+    line-height: 14.5px;
   }
 
   .lower-text,
@@ -39,7 +41,7 @@ $dark-blue: #2c94ec !default;
   }
 
   .upper-header {
-    height: 40px;
+    height: 35px;
   }
 
   .lower-header {
@@ -66,7 +68,6 @@ $dark-blue: #2c94ec !default;
   .side-header {
     position: fixed;
     padding: 0 10px;
-    margin-right: 10px;
     background: white;
     line-height: 20px;
     font-weight: 400;
