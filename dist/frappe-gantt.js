@@ -424,6 +424,7 @@ var Gantt = (function () {
     }
 
     prepare_values() {
+      this.empty = this.task.empty;
       this.invalid = this.task.invalid;
       this.height = this.gantt.options.bar_height;
       this.image_size = this.height - 5;
@@ -477,6 +478,7 @@ var Gantt = (function () {
     }
 
     draw() {
+      if (this.empty) return;
       this.draw_bar();
       this.draw_progress_bar();
       if (this.gantt.options.show_expected_progress) {
@@ -741,18 +743,22 @@ var Gantt = (function () {
     update_bar_position({ x = null, width = null }) {
       const bar = this.$bar;
       if (x) {
-        // get all x values of parent task
-        const xs = this.task.dependencies.map((dep) => {
-          return this.gantt.get_bar(dep).$bar.getX();
-        });
-        // child task must not go before parent
-        const valid_x = xs.reduce((_, curr) => {
-          return x >= curr;
-        }, x);
-        if (!valid_x) {
-          width = null;
-          return;
+        if (this.gantt.options.drag_limit_child) {
+          // get all x values of parent task
+          const xs = this.task.dependencies.map((dep) => {
+            return this.gantt.get_bar(dep).$bar.getX();
+          });
+          // child task must not go before parent
+          const valid_x = xs.reduce((_, curr) => {
+            return x >= curr;
+          }, x);
+
+          if (!valid_x) {
+            width = null;
+            return;
+          }
         }
+
         this.update_attr(bar, "x", x);
         this.$date_highlight.style.left = x + 'px';
       }
@@ -1029,12 +1035,15 @@ var Gantt = (function () {
 
       this.calculate_path();
       this.draw();
+      this.drawInner();
     }
 
     calculate_path() {
-      const rowHeight = this.gantt.options.bar_height + this.gantt.options.padding; // 48
-      const taskHeight = this.gantt.options.bar_height; // 30
-      const arrowCurve = this.gantt.options.arrow_curve; // 5
+      if (this.to_task.empty) return;
+
+      const rowHeight = this.gantt.options.bar_height + this.gantt.options.padding;
+      const taskHeight = this.gantt.options.bar_height;
+      const arrowCurve = this.gantt.options.arrow_curve;
       const arrowIndent = this.gantt.options.column_width / 2;
       const taskFrom = this.from_task;
       const taskTo = this.to_task;
@@ -1076,6 +1085,10 @@ var Gantt = (function () {
         "data-from": this.from_task.task.id,
         "data-to": this.to_task.task.id,
       });
+    }
+
+    drawInner() {
+      if (this.to_task.empty) return;
 
       this.svgPath = createSVG("path", {
         d: this.path,
@@ -1089,6 +1102,8 @@ var Gantt = (function () {
     }
 
     update() {
+      if (this.to_task.empty) return;
+
       this.calculate_path();
       this.svgPath.setAttribute("d", this.path);
       this.svgPolygon.setAttribute("points", this.points);
@@ -1179,18 +1194,20 @@ var Gantt = (function () {
 
   const DEFAULT_OPTIONS = {
     header_height: 65,
-    column_width: 30,
+    // column_width: 30,
     // step: 24,
-    view_modes: [...Object.values(VIEW_MODE)],
     bar_height: 30,
     bar_corner_radius: 3,
     arrow_curve: 5,
     handle_width: 8,
-    padding: 38,
+    padding: 18,
+    view_modes: [...Object.values(VIEW_MODE)],
     view_mode: VIEW_MODE.DAY,
     date_format: "YYYY-MM-DD",
     popup_trigger: "click",
     show_expected_progress: false,
+    drag_sync_child: false,
+    drag_limit_child: false,
     popup: null,
     language: "en",
     readonly: false,
@@ -1307,6 +1324,7 @@ var Gantt = (function () {
         if (!task.start && !task.end) {
           task._start = null;
           task._end = null;
+          task.empty = true;
           // const today = date_utils.today();
           // task._start = today;
           // task._end = date_utils.add(today, 2, "day");
@@ -2025,20 +2043,21 @@ var Gantt = (function () {
 
       $.on(this.$svg, "mousedown", ".grid-row", (e) => {
         is_creating = true;
-        console.log('ddd ==> offset-x, offset-y', e.offsetX, e.offsetY);
-        // 判断所在选区
-        [x_on_start, y_on_start] = this.get_snap_coord(e.offsetX, e.offsetY);
-        console.log('ddd ==> start-x, start-y', x_on_start, y_on_start);
+        // 选区
+        x_on_start = e.offsetX;
+        [, y_on_start] = this.get_snap_coord(e.offsetX, e.offsetY);
+        // const date = this.get_snap_date(x_on_start);
       });
 
       $.on(this.$svg, "mousemove", (e) => {
         if (!is_creating) return;
         let dx = e.offsetX - x_on_start;
 
-        const finaldx = this.get_snap_position(dx);
-        // 区块
-        const width = Math.abs(finaldx);
-        // 创建
+        // limit block
+        // const width = this.get_snap_position(Math.abs(dx));
+        // free distance
+        const width = Math.abs(dx);
+        // create rect
         if (!holder) {
           holder = createSVG('rect', {
             x: x_on_start,
@@ -2051,14 +2070,25 @@ var Gantt = (function () {
             append_to: this.layers.progress,
           });
         }
-        // 更新
-        var x = dx < 0 ? x_on_start - width : x_on_start;
+        // move-right
+        let x = x_on_start;
+        if (dx < 0) {
+          // move-left
+          x = x_on_start - width;
+        }
         holder.setAttribute('x', x);
         holder.setAttribute('width', width);
       });
 
       $.on(this.$svg, "mouseup", () => {
         is_creating = false;
+        if (holder) {
+          const start_x = holder.getX();
+          const end_x = holder.getX() + holder.getBBox().width;
+          const date_start = this.get_snap_date(start_x);
+          const date_end = this.get_snap_date(end_x);
+          console.log('ddd ==> date_start end', date_start, date_end);
+        }
         // this.layers.progress.removeChild(holder);
         holder = null;
       });
@@ -2104,7 +2134,7 @@ var Gantt = (function () {
           parent_bar_id
         ];
         // drag sync children
-        if (this.options.dependency) {
+        if (this.options.drag_sync_child) {
           ids.push(...this.get_all_dependent_tasks(parent_bar_id));
         }
         bars = ids.map((id) => this.get_bar(id));
@@ -2112,6 +2142,7 @@ var Gantt = (function () {
         this.bar_being_dragged = parent_bar_id;
 
         bars.forEach((bar) => {
+          if (bar.empty) return;
           const $bar = bar.$bar;
           $bar.ox = $bar.getX();
           $bar.oy = $bar.getY();
@@ -2178,8 +2209,12 @@ var Gantt = (function () {
         e.offsetY - y_on_start;
 
         bars.forEach((bar) => {
+          if (bar.empty) return;
           const $bar = bar.$bar;
-          $bar.finaldx = this.get_snap_position(dx);
+          // limit-block
+          // $bar.finaldx = this.get_snap_position(dx);
+          // free-distance
+          $bar.finaldx = dx;
           this.hide_popup();
           if (is_resizing_left) {
             // 左不能大于右
@@ -2218,6 +2253,7 @@ var Gantt = (function () {
       $.on(this.$svg, "mouseup", (e) => {
         this.bar_being_dragged = null;
         bars.forEach((bar) => {
+          if (bar.empty) return;
           const $bar = bar.$bar;
           if (!$bar.finaldx) return;
           bar.date_changed();
@@ -2322,6 +2358,14 @@ var Gantt = (function () {
           (rem < this.options.column_width / 60
             ? 0
             : this.options.column_width / 30);
+      } else if (this.view_is(VIEW_MODE.YEAR)) {
+        rem = dx % (this.options.column_width / 365);
+        position =
+          odx -
+          rem +
+          (rem < this.options.column_width / 120
+            ? 0
+            : this.options.column_width / 365);
       } else {
         rem = dx % this.options.column_width;
         position =
@@ -2333,11 +2377,35 @@ var Gantt = (function () {
     }
 
     get_snap_coord(ox, oy) {
-      this.options.header_height;
-      (this.options.bar_height + this.options.padding) * this.tasks.length;
+      console.log('ddd ==> ox', ox);
+      let start_x = ox;
+      // 网格区
+      if (
+        this.view_is(VIEW_MODE.HOUR) ||
+        this.view_is(VIEW_MODE.HALF_DAY) ||
+        this.view_is(VIEW_MODE.QUARTER_DAY) ||
+        this.view_is(VIEW_MODE.DAY)
+      ) {
+        start_x = parseInt(ox / this.options.column_width) * this.options.column_width;
+      }
 
-      console.log('ddd ==> bars', this.bars);
-      return [ox, oy];
+      const padding = this.options.padding / 2;
+      const header_height = this.options.header_height;
+      const row_height = this.options.bar_height + this.options.padding;
+
+      const mod = parseInt((oy - header_height) / row_height);
+      const start_y = header_height + mod * row_height + padding;
+
+      return [start_x, start_y];
+    }
+
+    get_snap_date(x) {
+      const x_in_units = x / this.options.column_width;
+      return date_utils.add(
+        this.gantt_start,
+        x_in_units * this.options.step,
+        "hour",
+      );
     }
 
     unselect_all() {

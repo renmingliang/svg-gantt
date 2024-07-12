@@ -21,6 +21,7 @@ export default class Bar {
   }
 
   prepare_values() {
+    this.empty = this.task.empty;
     this.invalid = this.task.invalid;
     this.height = this.gantt.options.bar_height;
     this.image_size = this.height - 5;
@@ -74,6 +75,7 @@ export default class Bar {
   }
 
   draw() {
+    if (this.empty) return;
     this.draw_bar();
     this.draw_progress_bar();
     if (this.gantt.options.show_expected_progress) {
@@ -338,18 +340,22 @@ export default class Bar {
   update_bar_position({ x = null, width = null }) {
     const bar = this.$bar;
     if (x) {
-      // get all x values of parent task
-      const xs = this.task.dependencies.map((dep) => {
-        return this.gantt.get_bar(dep).$bar.getX();
-      });
-      // child task must not go before parent
-      const valid_x = xs.reduce((_, curr) => {
-        return x >= curr;
-      }, x);
-      if (!valid_x) {
-        width = null;
-        return;
+      if (this.gantt.options.drag_limit_child) {
+        // get all x values of parent task
+        const xs = this.task.dependencies.map((dep) => {
+          return this.gantt.get_bar(dep).$bar.getX();
+        });
+        // child task must not go before parent
+        const valid_x = xs.reduce((_, curr) => {
+          return x >= curr;
+        }, x);
+
+        if (!valid_x) {
+          width = null;
+          return;
+        }
       }
+
       this.update_attr(bar, "x", x);
       this.$date_highlight.style.left = x + 'px'
     }

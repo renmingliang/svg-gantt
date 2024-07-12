@@ -8,12 +8,15 @@ export default class Arrow {
 
     this.calculate_path();
     this.draw();
+    this.drawInner();
   }
 
   calculate_path() {
-    const rowHeight = this.gantt.options.bar_height + this.gantt.options.padding; // 48
-    const taskHeight = this.gantt.options.bar_height; // 30
-    const arrowCurve = this.gantt.options.arrow_curve; // 5
+    if (this.to_task.empty) return;
+
+    const rowHeight = this.gantt.options.bar_height + this.gantt.options.padding;
+    const taskHeight = this.gantt.options.bar_height;
+    const arrowCurve = this.gantt.options.arrow_curve;
     const arrowIndent = this.gantt.options.column_width / 2;
     const taskFrom = this.from_task;
     const taskTo = this.to_task;
@@ -55,6 +58,10 @@ export default class Arrow {
       "data-from": this.from_task.task.id,
       "data-to": this.to_task.task.id,
     });
+  }
+
+  drawInner() {
+    if (this.to_task.empty) return;
 
     this.svgPath = createSVG("path", {
       d: this.path,
@@ -68,6 +75,8 @@ export default class Arrow {
   }
 
   update() {
+    if (this.to_task.empty) return;
+
     this.calculate_path();
     this.svgPath.setAttribute("d", this.path);
     this.svgPolygon.setAttribute("points", this.points);
