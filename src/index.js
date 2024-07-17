@@ -100,13 +100,25 @@ export default class Gantt {
     this.$container = document.createElement("div");
     this.$container.classList.add("gantt-container");
 
+    // 1.header horizontal-scroll
+    this.$container_header = document.createElement('div');
+    this.$container_header.classList.add('gantt-container_header');
+    this.$container.appendChild(this.$container_header);
+
+    // 2.main vertical-scroll
+    this.$container_main = document.createElement('div');
+    this.$container_main.classList.add('gantt-container_main');
+    this.$container.appendChild(this.$container_main);
+
+    // 3. appendTo wrapper
     const parent_element = this.$svg.parentElement;
     parent_element.appendChild(this.$container);
-    this.$container.appendChild(this.$svg);
+    this.$container_main.appendChild(this.$svg);
 
-    // popup wrapper
+    // 4.popup wrapper
     this.$popup_wrapper = document.createElement("div");
     this.$popup_wrapper.classList.add("popup-wrapper");
+    this.$popup_wrapper.classList.add("hidden");
     this.$container.appendChild(this.$popup_wrapper);
   }
 
@@ -285,6 +297,12 @@ export default class Gantt {
     if (!this.gantt_end) gantt_end = new Date();
     else gantt_end = date_utils.start_of(this.gantt_end, "day");
 
+
+    // 判断当前时间
+    const today = date_utils.today();
+    if (gantt_start > today) gantt_start = today;
+    if (gantt_end < today) gantt_end = today;
+
     // add date padding on both sides
     let viewKey;
     for (let [key, value] of Object.entries(VIEW_MODE)) {
@@ -341,8 +359,11 @@ export default class Gantt {
   }
 
   bind_events() {
+    this.bind_grid_scroll();
+
     if (this.options.readonly) return
     this.bind_grid_click();
+    this.bind_bar_create();
     this.bind_bar_events();
   }
 
@@ -384,10 +405,11 @@ export default class Gantt {
 
   make_grid_background() {
     const grid_width = this.dates.length * this.options.column_width;
-    const grid_height =
-      this.options.header_height +
-      12 + // scrollbar-height
-      (this.options.bar_height + this.options.padding) * this.tasks.length;
+    // const grid_height =
+    //   this.options.header_height +
+    //   12 + // scrollbar-height
+    //   (this.options.bar_height + this.options.padding) * this.tasks.length;
+    const grid_height = (this.options.bar_height + this.options.padding) * this.tasks.length;
 
     createSVG("rect", {
       x: 0,
@@ -397,6 +419,14 @@ export default class Gantt {
       class: "grid-background",
       append_to: this.$svg,
     });
+
+    if (this.options.height) {
+      this.$container_main.style.width = '100%';
+      this.$container_main.style.height = this.options.height + 'px';
+      this.$container_main.style.overflow = 'auto';
+      this.$container_main.style.position = 'relative';
+      this.$container.style.overflow = 'hidden';
+    }
 
     $.attr(this.$svg, {
       height: grid_height ,
@@ -410,7 +440,8 @@ export default class Gantt {
     const row_width = this.dates.length * this.options.column_width;
     const row_height = this.options.bar_height + this.options.padding;
 
-    let row_y = this.options.header_height;
+    // let row_y = this.options.header_height;
+    let row_y = 0;
 
     for (let _ of this.tasks) {
       createSVG("rect", {
@@ -430,14 +461,12 @@ export default class Gantt {
   }
 
   make_grid_header() {
-    const curHeader = document.querySelector('.grid-header')
-
     let $header = document.createElement("div");
     $header.style.height = this.options.header_height + "px";
     $header.style.width = this.dates.length * this.options.column_width + "px";
     $header.classList.add('grid-header')
     this.$header = $header
-    this.$container.appendChild($header)
+    this.$container_header.appendChild($header)
 
     let $upper_header = document.createElement("div");
     $upper_header.classList.add('upper-header')
@@ -493,20 +522,22 @@ export default class Gantt {
     this.$header.appendChild($side_header)
     const { left, y } = this.$header.getBoundingClientRect();
     const width = Math.min(this.$header.clientWidth, this.$container.clientWidth)
-    $side_header.style.left = left + this.$container.scrollLeft + width - $side_header.clientWidth + 1 + 'px';
+    $side_header.style.left = left + this.$container.scrollLeft + width - $side_header.clientWidth + 'px';
     $side_header.style.top = y + 10 + 'px';
   }
 
   make_grid_ticks() {
     if (!['both', 'vertical', 'horizontal'].includes(this.options.lines)) return
     let tick_x = 0;
-    let tick_y = this.options.header_height;
+    // let tick_y = this.options.header_height;
+    let tick_y = 0;
     let tick_height =
       (this.options.bar_height + this.options.padding) * this.tasks.length;
 
     let $lines_layer = createSVG("g", { class: 'lines_layer', append_to: this.layers.grid });
 
-    let row_y = this.options.header_height;
+    // let row_y = this.options.header_height;
+    let row_y = 0;
 
     const row_width = this.dates.length * this.options.column_width;
     const row_height = this.options.bar_height + this.options.padding;
@@ -568,7 +599,8 @@ export default class Gantt {
         const height = (this.options.bar_height + this.options.padding) * this.tasks.length;
         createSVG('rect', {
           x,
-          y: this.options.header_height,
+          // y: this.options.header_height,
+          y: 0,
           width: (this.view_is('Day') ? 1 : 2) * this.options.column_width,
           height,
           class: 'holiday-highlight',
@@ -625,13 +657,18 @@ export default class Gantt {
       this.view_is(VIEW_MODE.YEAR)
     ) {
       // Used as we must find the _end_ of session if view is not Day
-      const { x: left, date } = this.computeGridHighlightDimensions(this.options.view_mode)
-      const top = this.options.header_height;
-      const height = (this.options.bar_height + this.options.padding) * this.tasks.length;
-      this.$current_highlight = this.create_el({ top, left, height, classes: 'current-highlight', append_to: this.$container })
-      let $today = document.getElementById(date_utils.format(date).replaceAll(' ', '_'))
+      const grid_width = this.dates.length * this.options.column_width;
+      console.log('ddd ==> as', grid_width)
+      const $overlay_wrapper = this.create_el({ width: grid_width, classes: 'gantt-today-overlay', append_to: this.$container_main })
 
-      $today.classList.add('current-date-highlight')
+      const { x: left, date } = this.computeGridHighlightDimensions(this.options.view_mode)
+      // const top = this.options.header_height;
+      const top = 0;
+      const height = (this.options.bar_height + this.options.padding) * this.tasks.length;
+      this.$current_highlight = this.create_el({ top, left, height, classes: 'today-highlight', append_to: $overlay_wrapper })
+
+      let $today = document.getElementById(date_utils.format(date).replaceAll(' ', '_'))
+      $today.classList.add('today-date-highlight')
       $today.style.top = +$today.style.top.slice(0, -2) - 4 + 'px'
       $today.style.left = +$today.style.left.slice(0, -2) - 8 + 'px'
     }
@@ -643,7 +680,7 @@ export default class Gantt {
     $el.style.top = top + 'px'
     $el.style.left = left + 'px'
     if (id) $el.id = id
-    if (width) $el.style.width = height + 'px'
+    if (width) $el.style.width = width + 'px'
     if (height) $el.style.height = height + 'px'
     append_to.appendChild($el)
     return $el
@@ -853,6 +890,39 @@ export default class Gantt {
     this.set_scroll_position(new Date())
   }
 
+  bind_grid_scroll() {
+    const grid_width = this.dates.length * this.options.column_width;
+
+    // 鼠标滚轮
+    $.on(
+      this.$container_header,
+      'wheel',
+      (event) => {
+        if (event.shiftKey || event.deltaX) {
+          const scrollMove = event.deltaX ? event.deltaX : event.deltaY;
+          const scrollX = this.$container_main.scrollLeft || 0;
+          let newScrollX = scrollX + scrollMove;
+          if (newScrollX < 0) {
+            newScrollX = 0;
+          } else if (newScrollX > grid_width) {
+            newScrollX = grid_width;
+          }
+          console.log('ddd ==> scroll-X', newScrollX);
+          this.$container_main.scrollLeft = newScrollX;
+          event.preventDefault();
+        }
+      }
+    );
+
+    $.on(this.$container_main,
+      'scroll',
+      $.throttle(20, () => {
+        const scrollLeft = this.$container_main.scrollLeft;
+        this.$container_header.scrollLeft = scrollLeft;
+      }),
+    );
+  }
+
   bind_grid_click() {
     $.on(
       this.$svg,
@@ -863,8 +933,6 @@ export default class Gantt {
         this.hide_popup();
       },
     );
-
-    this.bind_bar_create();
   }
 
   bind_bar_create() {
@@ -986,7 +1054,7 @@ export default class Gantt {
         $bar.finaldx = 0;
       });
     });
-    $.on(this.$container, 'scroll', e => {
+    $.on(this.$container_main, 'scroll', e => {
       let elements = document.querySelectorAll('.bar-wrapper');
       let localBars = [];
       const ids = [];
@@ -1019,8 +1087,9 @@ export default class Gantt {
 
         $el.classList.add('current-upper')
         let dimensions = this.$svg.getBoundingClientRect()
-        $el.style.left = dimensions.x + this.$container.scrollLeft + 10 + 'px';
-        $el.style.top = dimensions.y + this.options.header_height - 50 + 'px';
+        $el.style.left = dimensions.x + this.$container_main.scrollLeft + 19 + 'px';
+        // $el.style.top = dimensions.y + this.options.header_height - 50 + 'px';
+        $el.style.top = dimensions.y - this.options.header_height + 14 + 'px';
       }
 
       Array.prototype.forEach.call(elements, function (el, i) {
@@ -1213,7 +1282,6 @@ export default class Gantt {
   }
 
   get_snap_coord(ox, oy) {
-    console.log('ddd ==> ox', ox);
     let start_x = ox;
     // 网格区
     if (
@@ -1226,7 +1294,8 @@ export default class Gantt {
     }
 
     const padding = this.options.padding / 2;
-    const header_height = this.options.header_height;
+    // const header_height = this.options.header_height;
+    const header_height = 0;
     const row_height = this.options.bar_height + this.options.padding;
 
     const mod = parseInt((oy - header_height) / row_height);

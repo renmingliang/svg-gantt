@@ -69,10 +69,13 @@
 .gantt-container {
   line-height: 1px;
 }
-.gantt-container .grid-header {
+.gantt-container_header {
+  position: relative;
+  overflow: hidden;
   border-bottom: 1px solid #EBEEF0;
+}
+.gantt-container .grid-header {
   background-color: #ffffff;
-  position: absolute;
   top: 0;
   left: 0;
   z-index: 10;
@@ -93,6 +96,7 @@
   font-size: 14px;
   position: absolute;
   width: fit-content;
+  white-space: nowrap;
 }
 .gantt-container .upper-text {
   position: absolute;
@@ -106,7 +110,6 @@
 .gantt-container .side-header {
   position: fixed;
   padding: 0 10px;
-  background: white;
   line-height: 20px;
   font-weight: 400;
 }
@@ -138,12 +141,17 @@
   position: absolute;
   display: none;
 }
-.gantt-container .current-highlight {
+.gantt-container .gantt-today-overlay {
+  position: absolute;
+  left: 0;
+  top: 0;
+}
+.gantt-container .today-highlight {
   position: absolute;
   background: #2c94ec;
   width: 1px;
 }
-.gantt-container .current-date-highlight {
+.gantt-container .today-date-highlight {
   background: #2c94ec;
   color: #fff;
   padding: 4px 8px;
@@ -256,6 +264,7 @@
 
 .gantt-container {
   position: relative;
+  height: 100%;
   overflow: auto;
   font-size: 12px;
 }

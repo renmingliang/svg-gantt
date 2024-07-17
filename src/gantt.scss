@@ -24,10 +24,15 @@ $dark-blue: #2c94ec !default;
 .gantt-container {
   line-height: 1px;
 
-  .grid-header {
+  &_header {
+    position: relative;
+    overflow: hidden;
     border-bottom: 1px solid $stroke-color;
+  }
+
+  .grid-header {
     background-color: #ffffff;
-    position: absolute;
+    // position: absolute;
     top: 0;
     left: 0;
     z-index: 10;
@@ -52,6 +57,7 @@ $dark-blue: #2c94ec !default;
     font-size: 14px;
     position: absolute;
     width: fit-content;
+    white-space: nowrap;
   }
 
   .upper-text {
@@ -68,7 +74,7 @@ $dark-blue: #2c94ec !default;
   .side-header {
     position: fixed;
     padding: 0 10px;
-    background: white;
+    // background: white;
     line-height: 20px;
     font-weight: 400;
   }
@@ -106,13 +112,19 @@ $dark-blue: #2c94ec !default;
     display: none;
   }
 
-  .current-highlight {
+  .gantt-today-overlay {
+    position: absolute;
+    left: 0;
+    top: 0;
+  }
+
+  .today-highlight {
     position: absolute;
     background: $dark-blue;
     width: 1px;
   }
 
-  .current-date-highlight {
+  .today-date-highlight {
     background: $dark-blue;
     color: $text-light;
     padding: 4px 8px;
@@ -277,6 +289,7 @@ $dark-blue: #2c94ec !default;
 
 .gantt-container {
   position: relative;
+  height: 100%;
   overflow: auto;
   font-size: 12px;
 

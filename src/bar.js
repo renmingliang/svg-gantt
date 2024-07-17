@@ -147,7 +147,7 @@ export default class Bar {
       this.gantt.options.column_width;
 
     let $date_highlight = document.createElement("div");
-    $date_highlight.id = `${this.task.id}-highlight`
+    $date_highlight.id = `highlight-${this.task.id}`;
     $date_highlight.classList.add('date-highlight')
     $date_highlight.style.height = this.height * 0.8 + 'px'
     $date_highlight.style.width = this.width + 'px'
@@ -289,13 +289,13 @@ export default class Bar {
     let timeout;
     $.on(this.group, "mouseenter", (e) => timeout = setTimeout(() => {
       this.show_popup(e.offsetX)
-      document.querySelector(`#${task_id}-highlight`).style.display = 'block'
+      document.querySelector(`#highlight-${task_id}`).style.display = 'block';
     }, 200))
 
     $.on(this.group, "mouseleave", () => {
       clearTimeout(timeout)
       this.gantt.popup?.hide?.()
-      document.querySelector(`#${task_id}-highlight`).style.display = 'none'
+      document.querySelector(`#highlight-${task_id}`).style.display = 'none';
     })
 
 
@@ -357,11 +357,11 @@ export default class Bar {
       }
 
       this.update_attr(bar, "x", x);
-      this.$date_highlight.style.left = x + 'px'
+      if (this.$date_highlight) this.$date_highlight.style.left = x + 'px';
     }
     if (width) {
       this.update_attr(bar, "width", width);
-      this.$date_highlight.style.width = width + 'px'
+      if (this.$date_highlight) this.$date_highlight.style.width = width + 'px';
     }
     this.update_label_position();
     this.update_handle_position();
@@ -495,9 +495,11 @@ export default class Bar {
   }
 
   compute_y() {
-    this.y =
-      this.gantt.options.header_height +
-      this.gantt.options.padding / 2 +
+    // this.y =
+    //   this.gantt.options.header_height +
+    //   this.gantt.options.padding / 2 +
+    //   this.task._index * (this.height + this.gantt.options.padding);
+    this.y = this.gantt.options.padding / 2 +
       this.task._index * (this.height + this.gantt.options.padding);
   }
 
