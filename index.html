@@ -29,46 +29,59 @@
   <body>
     <div class="container">
       <h2 class="heading">Interactive Gantt Chart entirely made in SVG!</h2>
-      <div class="gantt-target"></div>
+      <div class="gantt-target" style="height: 360px;"></div>
     </div>
     <script src="./const.js"></script>
     <script>
-      let gantt_chart = new Gantt(".gantt-target", tasks, {
-        on_click: (task) => {
-          console.log("Click", task);
-        },
-        // on_double_click: (task) => {
-        //   console.log("Double Click", task);
-        // },
-        // on_date_change: (task, start, end) => {
-        //   console.log("Date change", task, start, end);
-        // },
-        // on_progress_change: (task, progress) => {
-        //   console.log("Progress Change", task, progress);
-        // },
-        // on_view_change: (mode) => {
-        //   console.log("View Change", mode);
-        // },
-        // on_hover: (task, x, y) => {
-        //   console.log("Hover", x, y);
-        // },
-        view_mode: "Day",
-        view_mode_padding: { DAY: "5d" },
-        popup: false,
-        auto_move_label: false,
-        view_mode_select: true,
-        height: 300,
-        // lines: 'xxx',
-        // language: 'zh',
-        // drag_sync_child: true, // 子级同步拖拽
-        // scroll_to: 'today',
-        // today_button: false,
-        // readonly: true,
-        // lines: 'vertical',
-        // lower_text: (date) => date.getDay(),
-        // upper_text: (date, view_mode, def) => def,
-      });
-      console.log(gantt_chart);
+
+      function init(list) {
+        return new Gantt(".gantt-target", list, {
+          on_click: (task) => {
+            console.log("Click", task);
+          },
+          // on_double_click: (task) => {
+          //   console.log("Double Click", task);
+          // },
+          // on_date_change: (task, start, end) => {
+          //   console.log("Date change", task, start, end);
+          // },
+          // on_progress_change: (task, progress) => {
+          //   console.log("Progress Change", task, progress);
+          // },
+          // on_view_change: (mode) => {
+          //   console.log("View Change", mode);
+          // },
+          // on_hover: (task, x, y) => {
+          //   console.log("Hover", x, y);
+          // },
+          on_create: (task, x, y) => {
+            console.log("create", task, x, y);
+          },
+          view_mode: "Day",
+          view_mode_padding: { DAY: "5d" },
+          popup: false,
+          auto_move_label: false,
+          view_mode_select: true,
+          // height: 200,
+          // lines: 'xxx',
+          // language: 'zh',
+          // drag_sync_child: true, // 子级同步拖拽
+          // scroll_to: 'today',
+          // today_button: false,
+          // readonly: true,
+          // lines: 'vertical',
+          // lower_text: (date) => date.getDay(),
+          // upper_text: (date, view_mode, def) => def,
+        });
+      }
+
+      let gantt_chart = init([]);
+      console.log('ddd ==> start', gantt_chart);
+
+      setTimeout(() => {
+        gantt_chart = init(tasks);
+        console.log('ddd ==> update', gantt_chart);
+      }, 1000);
     </script>
   </body>
 </html>

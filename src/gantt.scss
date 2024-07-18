@@ -30,6 +30,15 @@ $dark-blue: #2c94ec !default;
     border-bottom: 1px solid $stroke-color;
   }
 
+  &_toolbar {
+    position: absolute;
+    padding: 0 10px;
+    line-height: 20px;
+    font-weight: 400;
+    right: 0;
+    top: 0;
+  }
+
   .grid-header {
     background-color: #ffffff;
     // position: absolute;
@@ -70,14 +79,6 @@ $dark-blue: #2c94ec !default;
 
   .current-upper {
     position: fixed;
-  }
-
-  .side-header {
-    position: fixed;
-    padding: 0 10px;
-    // background: white;
-    line-height: 20px;
-    font-weight: 400;
   }
 
   .today-button,
@@ -141,8 +142,6 @@ $dark-blue: #2c94ec !default;
   .grid-background {
     fill: none;
   }
-
-
 
   .grid-row {
     fill: #ffffff;
@@ -293,6 +292,7 @@ $dark-blue: #2c94ec !default;
   height: 100%;
   overflow: auto;
   font-size: 12px;
+  background: #fff;
 
   .popup-wrapper {
     position: absolute;

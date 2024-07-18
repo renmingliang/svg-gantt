@@ -146,6 +146,7 @@ export default class Bar {
       this.gantt.options.step) *
       this.gantt.options.column_width;
 
+    // TODO 待优化-只需渲染一个
     let $date_highlight = document.createElement("div");
     $date_highlight.id = `highlight-${this.task.id}`;
     $date_highlight.classList.add('date-highlight')

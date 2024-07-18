@@ -74,6 +74,14 @@
   overflow: hidden;
   border-bottom: 1px solid #EBEEF0;
 }
+.gantt-container_toolbar {
+  position: absolute;
+  padding: 0 10px;
+  line-height: 20px;
+  font-weight: 400;
+  right: 0;
+  top: 0;
+}
 .gantt-container .grid-header {
   background-color: #ffffff;
   top: 0;
@@ -107,12 +115,6 @@
 }
 .gantt-container .current-upper {
   position: fixed;
-}
-.gantt-container .side-header {
-  position: fixed;
-  padding: 0 10px;
-  line-height: 20px;
-  font-weight: 400;
 }
 .gantt-container .today-button,
 .gantt-container .viewmode-select {
@@ -268,6 +270,7 @@
   height: 100%;
   overflow: auto;
   font-size: 12px;
+  background: #fff;
 }
 .gantt-container .popup-wrapper {
   position: absolute;
