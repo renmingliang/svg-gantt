@@ -153,6 +153,10 @@ export default class Gantt {
   setup_tasks(tasks) {
     // prepare tasks
     this.tasks = tasks.map((task, i) => {
+      // reset symbol
+      task.empty = false;
+      task.invalid = false;
+
       // convert to Date objects
       task._start = date_utils.parse(task.start);
       if (task.end === undefined && task.duration !== undefined) {
@@ -349,7 +353,7 @@ export default class Gantt {
       padding_end.scale,
     );
 
-    console.log('ddd ==> start_end', this.gantt_start, this.gantt_end);
+    console.log('gantt ==> start_end', this.gantt_start, this.gantt_end);
   }
 
   setup_date_values() {
@@ -431,7 +435,7 @@ export default class Gantt {
       append_to: this.$svg,
     });
 
-    const scroll_height = this.options.height ? this.options.height + 'px' : `calc(100% - ${this.options.header_height}px`;
+    const scroll_height = this.options.height ? this.options.height + 'px' : `calc(100% - ${this.options.header_height + 1}px`;
     this.$container_main.style.height = scroll_height;
     this.$container_main.style.width = '100%';
     this.$container_main.style.overflow = 'auto';
@@ -473,7 +477,6 @@ export default class Gantt {
     let $header = document.createElement("div");
     $header.style.height = this.options.header_height + "px";
     $header.style.width = this.dates.length * this.options.column_width + "px";
-    console.log('ddd ==> grid-header', $header.style.width);
     $header.classList.add('grid-header')
     this.$header = $header
 
@@ -661,7 +664,6 @@ export default class Gantt {
     ) {
       // Used as we must find the _end_ of session if view is not Day
       const grid_width = this.dates.length * this.options.column_width;
-      console.log('ddd ==> as', grid_width)
       this.$today_overlay = this.create_el({ width: grid_width, classes: 'gantt-today-overlay', append_to: this.$container_main })
 
       const { x: left, date } = this.computeGridHighlightDimensions(this.options.view_mode)
@@ -909,7 +911,6 @@ export default class Gantt {
           } else if (newScrollX > grid_width) {
             newScrollX = grid_width;
           }
-          console.log('ddd ==> scroll-X', newScrollX);
           this.$container_main.scrollLeft = newScrollX;
           event.preventDefault();
         }
@@ -952,7 +953,7 @@ export default class Gantt {
       // location
       const index = parseInt(e.offsetY / row_height);
       matched_task = this.tasks[index];
-      // only task date
+      // only empty date
       if (matched_task && matched_task.empty !== true) return;
       // start record
       is_creating = true;
@@ -979,6 +980,7 @@ export default class Gantt {
           rx: radius,
           ry: radius,
           class: 'bar-progress',
+          'data-id': matched_task.id,
           append_to: this.layers.progress,
         });
       }
@@ -999,10 +1001,32 @@ export default class Gantt {
         const end_x = holder.getX() + holder.getBBox().width;
         const date_start = this.get_snap_date(start_x);
         const date_end = this.get_snap_date(end_x);
-        // callback create
-        this.trigger_event('create', [matched_task, date_start, date_end]);
+
+        const update_task = Object.assign(matched_task, { _start: date_start, _end: date_end, empty: false, invalid: false })
+        // Bar
+        const update_bar = new Bar(this, update_task);
+
+        // remove old_bar from bars and bar-layers
+        const old_bar = this.bars[matched_task._index];
+        this.layers.bar.removeChild(old_bar.group);
+        this.bars.splice(matched_task._index, 1, update_bar);
+
+        // insert update_bar and update tasks
+        const target_postion = this.bars[matched_task._index+1];
+        this.layers.bar.insertBefore(update_bar.group, target_postion ? target_postion.group : null);
+        this.tasks.splice(matched_task._index, 1, update_task);
+
+        // Arrow
+        // before empty all childs, after appendto arrow-layers
+        this.layers.arrow.innerHTML = "";
+        this.make_arrows();
+        this.map_arrows_on_bars();
+
+        // remove holder dom
+        this.layers.progress.removeChild(holder);
+        // trigger event
+        this.trigger_event('date_change', [matched_task, date_start, date_end]);
       }
-      // this.layers.progress.removeChild(holder);
       holder = null;
     });
   }
@@ -1063,6 +1087,64 @@ export default class Gantt {
         $bar.finaldx = 0;
       });
     });
+
+    $.on(this.$svg, "mousemove", (e) => {
+      if (!action_in_progress()) return;
+      const dx = e.offsetX - x_on_start;
+      const dy = e.offsetY - y_on_start;
+
+      bars.forEach((bar) => {
+        if (bar.empty) return;
+        const $bar = bar.$bar;
+        // limit-block
+        // $bar.finaldx = this.get_snap_position(dx);
+        // free-distance
+        $bar.finaldx = dx;
+        this.hide_popup();
+        if (is_resizing_left) {
+          // 左不能大于右
+          if ($bar.finaldx - $bar.owidth >= 0) return;
+          if (parent_bar_id === bar.task.id) {
+            bar.update_bar_position({
+              x: $bar.ox + $bar.finaldx,
+              width: $bar.owidth - $bar.finaldx,
+            });
+          } else {
+            bar.update_bar_position({
+              x: $bar.ox + $bar.finaldx,
+            });
+          }
+        } else if (is_resizing_right) {
+          // 右不能小于左
+          if ($bar.finaldx + $bar.owidth < 0) return;
+          if (parent_bar_id === bar.task.id) {
+            bar.update_bar_position({
+              width: $bar.owidth + $bar.finaldx,
+            });
+          }
+        } else if (is_dragging && !this.options.readonly) {
+          bar.update_bar_position({ x: $bar.ox + $bar.finaldx });
+        }
+      });
+    });
+
+    $.on(this.$svg, "mouseup", () => {
+      this.bar_being_dragged = null;
+      bars.forEach((bar) => {
+        if (bar.empty) return;
+        const $bar = bar.$bar;
+        if (!$bar.finaldx) return;
+        bar.date_changed();
+        bar.set_action_completed();
+      });
+    });
+
+    document.addEventListener("mouseup", () => {
+      is_dragging = false;
+      is_resizing_left = false;
+      is_resizing_right = false;
+    });
+
     $.on(this.$container_main, 'scroll', e => {
       let elements = document.querySelectorAll('.bar-wrapper');
       let localBars = [];
@@ -1116,64 +1198,6 @@ export default class Gantt {
       }
 
       x_on_scroll_start = e.currentTarget.scrollLeft;
-    });
-
-    $.on(this.$svg, "mousemove", (e) => {
-      if (!action_in_progress()) return;
-      const dx = e.offsetX - x_on_start;
-      const dy = e.offsetY - y_on_start;
-
-      bars.forEach((bar) => {
-        if (bar.empty) return;
-        const $bar = bar.$bar;
-        // limit-block
-        // $bar.finaldx = this.get_snap_position(dx);
-        // free-distance
-        $bar.finaldx = dx;
-        this.hide_popup();
-        if (is_resizing_left) {
-          // 左不能大于右
-          if ($bar.finaldx - $bar.owidth >= 0) return;
-          if (parent_bar_id === bar.task.id) {
-            bar.update_bar_position({
-              x: $bar.ox + $bar.finaldx,
-              width: $bar.owidth - $bar.finaldx,
-            });
-          } else {
-            bar.update_bar_position({
-              x: $bar.ox + $bar.finaldx,
-            });
-          }
-        } else if (is_resizing_right) {
-          // 右不能小于左
-          if ($bar.finaldx + $bar.owidth < 0) return;
-          if (parent_bar_id === bar.task.id) {
-            bar.update_bar_position({
-              width: $bar.owidth + $bar.finaldx,
-            });
-          }
-        } else if (is_dragging && !this.options.readonly) {
-          bar.update_bar_position({ x: $bar.ox + $bar.finaldx });
-        }
-      });
-    });
-
-    document.addEventListener("mouseup", (e) => {
-
-      is_dragging = false;
-      is_resizing_left = false;
-      is_resizing_right = false;
-    });
-
-    $.on(this.$svg, "mouseup", (e) => {
-      this.bar_being_dragged = null;
-      bars.forEach((bar) => {
-        if (bar.empty) return;
-        const $bar = bar.$bar;
-        if (!$bar.finaldx) return;
-        bar.date_changed();
-        bar.set_action_completed();
-      });
     });
 
     this.bind_bar_progress();

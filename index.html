@@ -39,24 +39,21 @@
           on_click: (task) => {
             console.log("Click", task);
           },
-          // on_double_click: (task) => {
-          //   console.log("Double Click", task);
-          // },
-          // on_date_change: (task, start, end) => {
-          //   console.log("Date change", task, start, end);
-          // },
-          // on_progress_change: (task, progress) => {
-          //   console.log("Progress Change", task, progress);
-          // },
+          on_double_click: (task) => {
+            console.log("Double Click", task);
+          },
+          on_date_change: (task, start, end) => {
+            console.log("Date change", task, start, end);
+          },
+          on_progress_change: (task, progress) => {
+            console.log("Progress Change", task, progress);
+          },
           // on_view_change: (mode) => {
           //   console.log("View Change", mode);
           // },
           // on_hover: (task, x, y) => {
           //   console.log("Hover", x, y);
           // },
-          on_create: (task, x, y) => {
-            console.log("create", task, x, y);
-          },
           view_mode: "Day",
           view_mode_padding: { DAY: "5d" },
           popup: false,
@@ -76,10 +73,11 @@
       }
 
       let gantt_chart = init([]);
-      console.log('ddd ==> start', gantt_chart);
+      // console.log('ddd ==> start', gantt_chart);
 
       setTimeout(() => {
-        gantt_chart = init(tasks);
+        // gantt_chart = init(tasks);
+        gantt_chart.refresh(tasks);
         console.log('ddd ==> update', gantt_chart);
       }, 1000);
     </script>

@@ -422,6 +422,8 @@ export default class Bar {
 
     if (!changed) return;
 
+    // TODO new_start_date > this.gantt_start or new_end_date > this.gantt_end
+
     this.gantt.trigger_event("date_change", [
       this.task,
       new_start_date,
