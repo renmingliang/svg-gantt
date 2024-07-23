@@ -26,3 +26,14 @@ License: MIT
 6. today - scrollTo 日期居中位置显示；
 7. 未设置开始时间 or 结束时间 -> 相应变更对于时间点 才更新；
 8. 无tasks数据时，空绘制；
+
+### insert
+1. 插入tasks
+2. 更新日期 gantt_start、gantt_end
+3. 插入grid-row
+4. 插入lines_layer
+5. 插入bars
+6. 重绘arrows
+7. 修改高度 grid-background 和 svg.gantt
+8. 修改holiday-highlight -- height=100%
+9. 修改tick -- height=5000(设定无限大)

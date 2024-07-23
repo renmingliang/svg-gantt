@@ -153,89 +153,7 @@ export default class Gantt {
   setup_tasks(tasks) {
     // prepare tasks
     this.tasks = tasks.map((task, i) => {
-      // reset symbol
-      task.empty = false;
-      task.invalid = false;
-
-      // convert to Date objects
-      task._start = date_utils.parse(task.start);
-      if (task.end === undefined && task.duration !== undefined) {
-        task.end = task._start;
-        let durations = task.duration.split(" ");
-
-        durations.forEach((tmpDuration) => {
-          let { duration, scale } = date_utils.parse_duration(tmpDuration);
-          task.end = date_utils.add(task.end, duration, scale);
-        });
-      }
-      task._end = date_utils.parse(task.end);
-      let diff = date_utils.diff(task._end, task._start, "year");
-      if (diff < 0) {
-        throw Error("start of task can't be after end of task: in task #, " + (i + 1))
-      }
-      // make task invalid if duration too large
-      if (date_utils.diff(task._end, task._start, "year") > 10) {
-        task.end = null;
-      }
-
-
-      // cache index
-      task._index = i;
-
-      // invalid dates
-      if (!task.start && !task.end) {
-        task._start = null;
-        task._end = null;
-        task.empty = true;
-        // const today = date_utils.today();
-        // task._start = today;
-        // task._end = date_utils.add(today, 2, "day");
-      }
-
-      if (!task.start && task.end) {
-        task._start = date_utils.add(task._end, -2, "day");
-      }
-
-      if (task.start && !task.end) {
-        task._end = date_utils.add(task._start, 2, "day");
-      }
-
-      // if hours is not set, assume the last day is full day
-      // e.g: 2018-09-09 becomes 2018-09-09 23:59:59
-      if (task._end) {
-        const task_end_values = date_utils.get_date_values(task._end);
-        if (task_end_values.slice(3).every((d) => d === 0)) {
-          task._end = date_utils.add(task._end, 24, "hour");
-        }
-      }
-
-      // invalid flag
-      if (!task.start || !task.end) {
-        task.invalid = true;
-      }
-
-      // dependencies
-      if (typeof task.dependencies === "string" || !task.dependencies) {
-        let deps = [];
-        if (task.dependencies) {
-          deps = task.dependencies
-            .split(",")
-            .map((d) => d.trim().replaceAll(' ', '_'))
-            .filter((d) => d);
-        }
-        task.dependencies = deps;
-      }
-
-      // uids
-      if (!task.id) {
-        task.id = generate_id(task);
-      } else if (typeof task.id === 'string') {
-        task.id = task.id.replaceAll(' ', '_')
-      } else {
-        task.id = `${task.id}`
-      }
-
-      return task;
+      return this.format_task(task, i);
     });
 
     this.setup_dependencies();
@@ -251,9 +169,150 @@ export default class Gantt {
     }
   }
 
+  format_task(task, i) {
+    // reset symbol
+    task.empty = false;
+    task.invalid = false;
+
+    // convert to Date objects
+    task._start = date_utils.parse(task.start);
+    if (task.end === undefined && task.duration !== undefined) {
+      task.end = task._start;
+      let durations = task.duration.split(" ");
+
+      durations.forEach((tmpDuration) => {
+        let { duration, scale } = date_utils.parse_duration(tmpDuration);
+        task.end = date_utils.add(task.end, duration, scale);
+      });
+    }
+    task._end = date_utils.parse(task.end);
+    let diff = date_utils.diff(task._end, task._start, "year");
+    if (diff < 0) {
+      throw Error("start of task can't be after end of task: in task #, " + (i + 1))
+    }
+    // make task invalid if duration too large
+    if (date_utils.diff(task._end, task._start, "year") > 10) {
+      task.end = null;
+    }
+
+
+    // cache index
+    task._index = i;
+
+    // invalid dates
+    if (!task.start && !task.end) {
+      task._start = null;
+      task._end = null;
+      task.empty = true;
+      // const today = date_utils.today();
+      // task._start = today;
+      // task._end = date_utils.add(today, 2, "day");
+    }
+
+    if (!task.start && task.end) {
+      task._start = date_utils.add(task._end, -2, "day");
+    }
+
+    if (task.start && !task.end) {
+      task._end = date_utils.add(task._start, 2, "day");
+    }
+
+    // if hours is not set, assume the last day is full day
+    // e.g: 2018-09-09 becomes 2018-09-09 23:59:59
+    if (task._end) {
+      const task_end_values = date_utils.get_date_values(task._end);
+      if (task_end_values.slice(3).every((d) => d === 0)) {
+        task._end = date_utils.add(task._end, 24, "hour");
+      }
+    }
+
+    // invalid flag
+    if (!task.start || !task.end) {
+      task.invalid = true;
+    }
+
+    // dependencies
+    if (typeof task.dependencies === "string" || !task.dependencies) {
+      let deps = [];
+      if (task.dependencies) {
+        deps = task.dependencies
+          .split(",")
+          .map((d) => d.trim().replaceAll(' ', '_'))
+          .filter((d) => d);
+      }
+      task.dependencies = deps;
+    }
+
+    // uids
+    if (!task.id) {
+      task.id = generate_id(task);
+    } else if (typeof task.id === 'string') {
+      task.id = task.id.replaceAll(' ', '_')
+    } else {
+      task.id = `${task.id}`
+    }
+    return task;
+  }
+
   refresh(tasks) {
     this.setup_tasks(tasks);
     this.change_view_mode();
+  }
+
+  insert(task, index) {
+    const target = index === undefined ? this.tasks.length : index;
+    console.log('ddd ==> insert-target', target);
+    // resort task._index
+    let i = target;
+    while (i < this.tasks.length) {
+      this.tasks[i]._index = i + 1;
+      i+=1;
+    }
+    // insert format task
+    const insert_task = this.format_task(task, target)
+    this.tasks.splice(target, 0, insert_task);
+    console.log('ddd ==> insert-tasks', this.tasks);
+
+    // new Bar
+    const insert_bar = new Bar(this, insert_task);
+    const target_bar = this.bars[target + 1];
+    this.layers.bar.insertBefore(insert_bar.group, target_bar ? target_bar.group : null);
+    this.bars.splice(target, 0, insert_bar);
+
+    // Arrow
+    // before empty all childs, after appendto arrow-layers
+    this.layers.arrow.innerHTML = "";
+    this.make_arrows();
+    this.map_arrows_on_bars();
+
+    // append grid-row
+    const row_width = this.dates.length * this.options.column_width;
+    const row_height = this.options.bar_height + this.options.padding;
+    const insert_y = (this.tasks.length - 1) * row_height;
+    createSVG('rect', {
+      x: 0,
+      y: insert_y,
+      width: row_width,
+      height: row_height,
+      class: 'grid-row',
+      append_to: this.layers.grid.querySelector('.rows_layer'),
+    });
+    // append row-line
+    if (this.options.lines !== 'vertical') {
+      createSVG("line", {
+        x1: 0,
+        y1: insert_y,
+        x2: row_width,
+        y2: insert_y,
+        class: "row-line",
+        append_to: this.layers.grid.querySelector('.lines_layer'),
+      });
+    }
+
+    // update height
+    const grid_height = this.tasks.length * row_height;
+    this.$svg.setAttribute("height", grid_height);
+    this.$svg.querySelector(".grid-background").setAttribute("height", grid_height);
   }
 
   change_view_mode(mode = this.options.view_mode) {
@@ -319,6 +378,11 @@ export default class Gantt {
     if (gantt_start > today) gantt_start = today;
     if (gantt_end < today) gantt_end = today;
 
+    // get date start and end
+    this.get_gantt_dates(gantt_start, gantt_end);
+  }
+
+  get_gantt_dates(start, end) {
     // add date padding on both sides
     let viewKey;
     for (let [key, value] of Object.entries(VIEW_MODE)) {
@@ -329,28 +393,31 @@ export default class Gantt {
     const [padding_start, padding_end] = this.options.view_mode_padding[
       viewKey
     ].map(date_utils.parse_duration);
-    gantt_start = date_utils.add(
-      gantt_start,
+
+    const gantt_start = date_utils.add(
+      start,
       -padding_start.duration,
       padding_start.scale,
     );
 
     let format_string;
     if (this.view_is(VIEW_MODE.YEAR)) {
-      format_string = "YYYY"
+        format_string = 'YYYY';
     } else if (this.view_is(VIEW_MODE.MONTH)) {
-      format_string = "YYYY-MM"
+        format_string = 'YYYY-MM';
     } else if (this.view_is(VIEW_MODE.DAY)) {
-      format_string = "YYYY-MM-DD"
+        format_string = 'YYYY-MM-DD';
     } else {
-      format_string = "YYYY-MM-DD HH"
+        format_string = 'YYYY-MM-DD HH';
     }
-    this.gantt_start = date_utils.parse(date_utils.format(gantt_start, format_string));
-    this.gantt_start.setHours(0, 0, 0, 0)
+    this.gantt_start = date_utils.parse(
+        date_utils.format(gantt_start, format_string),
+    );
+    this.gantt_start.setHours(0, 0, 0, 0);
     this.gantt_end = date_utils.add(
-      gantt_end,
-      padding_end.duration,
-      padding_end.scale,
+        end,
+        padding_end.duration,
+        padding_end.scale,
     );
 
     console.log('gantt ==> start_end', this.gantt_start, this.gantt_end);
@@ -449,7 +516,7 @@ export default class Gantt {
   }
 
   make_grid_rows() {
-    const rows_layer = createSVG("g", { append_to: this.layers.grid });
+    const rows_layer = createSVG("g", { class: 'rows_layer',append_to: this.layers.grid });
 
     const row_width = this.dates.length * this.options.column_width;
     const row_height = this.options.bar_height + this.options.padding;
@@ -540,8 +607,9 @@ export default class Gantt {
     if (!['both', 'vertical', 'horizontal'].includes(this.options.lines)) return
     let tick_x = 0;
     let tick_y = 0;
-    let tick_height =
-      (this.options.bar_height + this.options.padding) * this.tasks.length;
+    let tick_height = 5000; // assert infinity
+    // let tick_height =
+    //   (this.options.bar_height + this.options.padding) * this.tasks.length;
 
     let $lines_layer = createSVG("g", { class: 'lines_layer', append_to: this.layers.grid });
 
@@ -604,12 +672,12 @@ export default class Gantt {
         const x = (date_utils.diff(d, this.gantt_start, 'hour') /
           this.options.step) *
           this.options.column_width;
-        const height = (this.options.bar_height + this.options.padding) * this.tasks.length;
+        // const height = (this.options.bar_height + this.options.padding) * this.tasks.length;
         createSVG('rect', {
           x,
           y: 0,
           width: (this.view_is('Day') ? 1 : 2) * this.options.column_width,
-          height,
+          height: '100%',
           class: 'holiday-highlight',
           append_to: this.layers.grid,
         });
@@ -1012,7 +1080,7 @@ export default class Gantt {
         this.layers.bar.removeChild(old_bar.group);
         this.bars.splice(matched_task._index, 1, update_bar);
 
-        // insert update_bar and update tasks
+        // replace update_bar and update tasks
         const target_postion = this.bars[matched_task._index+1];
         this.layers.bar.insertBefore(update_bar.group, target_postion ? target_postion.group : null);
         this.tasks.splice(matched_task._index, 1, update_task);

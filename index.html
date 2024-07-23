@@ -37,16 +37,18 @@
     <script src="./const.js"></script>
     <script>
 
+      let int = 6;
       function insertData() {
         const mock = {
-          start: '2023-03-21',
-          end: '2023-04-29',
-          name: 'insert mock',
-          id: 'Task 6',
+          start: '2024-03-28',
+          end: '2024-04-02',
+          name: 'insert mock_' + int,
+          id: 'Task ' + int,
           progress: 10,
           dependencies: 'Task 1, Task 2'
         }
-        console.log('ddd ==> insert', mock, gantt_chart)
+        int += 1;
+        gantt_chart.insert(mock);
       }
       function deleteData() {
         console.log('ddd ==> delete')
