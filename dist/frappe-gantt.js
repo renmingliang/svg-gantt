@@ -699,8 +699,10 @@ var Gantt = (function () {
       const bar = this.$bar;
       const handle_width = this.gantt.options.handle_width;
 
+      const gw = bar.getWidth();
+
       createSVG("rect", {
-        x: bar.getX() + bar.getWidth() - handle_width - 1,
+        x: bar.getX() + (gw > handle_width ? (gw - handle_width - 1) : (gw + handle_width)),
         y: bar.getY() + 1,
         width: handle_width,
         height: this.height - 2,
@@ -1749,10 +1751,11 @@ var Gantt = (function () {
         $el.textContent = 'Mode';
         $select.appendChild($el);
 
-        for (const key in VIEW_MODE) {
+        const modes = this.options.view_modes;
+        for (const key in modes) {
           const $option = document.createElement("option");
-          $option.value = VIEW_MODE[key];
-          $option.textContent = VIEW_MODE[key];
+          $option.value = modes[key];
+          $option.textContent = modes[key];
           $select.appendChild($option);
         }
         // $select.value = this.options.view_mode
@@ -2329,6 +2332,7 @@ var Gantt = (function () {
         });
       });
 
+      const handle_width = this.options.handle_width;
       $.on(this.$svg, "mousemove", (e) => {
         if (!action_in_progress()) return;
         const dx = e.offsetX - x_on_start;
@@ -2344,7 +2348,7 @@ var Gantt = (function () {
           this.hide_popup();
           if (is_resizing_left) {
             // 左不能大于右
-            if ($bar.finaldx - $bar.owidth >= 0) return;
+            if ($bar.finaldx - $bar.owidth + handle_width >= 0) return;
             if (parent_bar_id === bar.task.id) {
               bar.update_bar_position({
                 x: $bar.ox + $bar.finaldx,
@@ -2357,7 +2361,7 @@ var Gantt = (function () {
             }
           } else if (is_resizing_right) {
             // 右不能小于左
-            if ($bar.finaldx + $bar.owidth < 0) return;
+            if ($bar.finaldx + $bar.owidth < handle_width) return;
             if (parent_bar_id === bar.task.id) {
               bar.update_bar_position({
                 width: $bar.owidth + $bar.finaldx,
@@ -2439,6 +2443,8 @@ var Gantt = (function () {
         }
 
         x_on_scroll_start = e.currentTarget.scrollLeft;
+
+        this.trigger_event('scroll', [e]);
       });
 
       this.bind_bar_progress();

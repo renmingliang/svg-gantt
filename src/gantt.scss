@@ -1,8 +1,8 @@
 @import "./dark.scss";
 
-$bar-color: #fff !default;
+$bar-color: #b8c2cc !default;
 $bar-color-important: #94c4f4 !default;
-$bar-stroke: #fff !default;
+$bar-stroke: #b8c2cc !default;
 $dark-stroke-color: #e0e0e0 !default;
 $stroke-color: #EBEEF0 !default;
 $light-bg: #f5f5f5 !default;
@@ -12,8 +12,9 @@ $holiday-color: #F9FAFA !default;
 $text-muted: #666 !default;
 $text-grey: #98A1A9;
 $text-light: #fff !default;
-$text-dark: #111 !default;
-$progress: #EBEEF0 !default;
+$text-dark: #555 !default;
+$progress: #a3a3ff !default;
+$progress-highlight: #EBEEF0 !default;
 $handle-color: #dcdce4 !default;
 $handle-color-important: #94c4f4 !default;
 $light-blue: #c4c4e9 !default;
@@ -41,7 +42,6 @@ $dark-blue: #2c94ec !default;
 
   .grid-header {
     background-color: #ffffff;
-    // position: absolute;
     top: 0;
     left: 0;
     z-index: 10;
@@ -108,7 +108,7 @@ $dark-blue: #2c94ec !default;
   }
 
   .date-highlight {
-    background-color: $progress;
+    background-color: $progress-highlight;
     border-radius: 12px;
     position: absolute;
     display: none;
@@ -153,6 +153,7 @@ $dark-blue: #2c94ec !default;
 
   .row-line {
     stroke: $light-border-color;
+    stroke-width: 0.4;
   }
 
   .tick {
@@ -192,7 +193,7 @@ $dark-blue: #2c94ec !default;
     fill: $light-blue;
   }
 
-  .bar-invalid {
+  .bar-wrapper .bar-invalid {
     fill: transparent;
     stroke: $bar-stroke;
     stroke-width: 1;

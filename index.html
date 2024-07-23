@@ -30,9 +30,27 @@
     <div class="container">
       <h2 class="heading">Interactive Gantt Chart entirely made in SVG!</h2>
       <div class="gantt-target" style="height: 360px;"></div>
+
+      <button onclick="insertData()">插入一条数据</button>
+      <button onclick="deleteData()">删除一条数据</button>
     </div>
     <script src="./const.js"></script>
     <script>
+
+      function insertData() {
+        const mock = {
+          start: '2023-03-21',
+          end: '2023-04-29',
+          name: 'insert mock',
+          id: 'Task 6',
+          progress: 10,
+          dependencies: 'Task 1, Task 2'
+        }
+        console.log('ddd ==> insert', mock, gantt_chart)
+      }
+      function deleteData() {
+        console.log('ddd ==> delete')
+      }
 
       function init(list) {
         return new Gantt(".gantt-target", list, {

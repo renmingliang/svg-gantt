@@ -224,8 +224,10 @@ export default class Bar {
     const bar = this.$bar;
     const handle_width = this.gantt.options.handle_width;
 
+    const gw = bar.getWidth();
+
     createSVG("rect", {
-      x: bar.getX() + bar.getWidth() - handle_width - 1,
+      x: bar.getX() + (gw > handle_width ? (gw - handle_width - 1) : (gw + handle_width)),
       y: bar.getY() + 1,
       width: handle_width,
       height: this.height - 2,

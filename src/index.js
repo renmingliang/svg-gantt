@@ -508,10 +508,11 @@ export default class Gantt {
       $el.textContent = 'Mode'
       $select.appendChild($el)
 
-      for (const key in VIEW_MODE) {
+      const modes = this.options.view_modes;
+      for (const key in modes) {
         const $option = document.createElement("option");
-        $option.value = VIEW_MODE[key];
-        $option.textContent = VIEW_MODE[key];
+        $option.value = modes[key];
+        $option.textContent = modes[key];
         $select.appendChild($option);
       }
       // $select.value = this.options.view_mode
@@ -1088,6 +1089,7 @@ export default class Gantt {
       });
     });
 
+    const handle_width = this.options.handle_width;
     $.on(this.$svg, "mousemove", (e) => {
       if (!action_in_progress()) return;
       const dx = e.offsetX - x_on_start;
@@ -1103,7 +1105,7 @@ export default class Gantt {
         this.hide_popup();
         if (is_resizing_left) {
           // 左不能大于右
-          if ($bar.finaldx - $bar.owidth >= 0) return;
+          if ($bar.finaldx - $bar.owidth + handle_width >= 0) return;
           if (parent_bar_id === bar.task.id) {
             bar.update_bar_position({
               x: $bar.ox + $bar.finaldx,
@@ -1116,7 +1118,7 @@ export default class Gantt {
           }
         } else if (is_resizing_right) {
           // 右不能小于左
-          if ($bar.finaldx + $bar.owidth < 0) return;
+          if ($bar.finaldx + $bar.owidth < handle_width) return;
           if (parent_bar_id === bar.task.id) {
             bar.update_bar_position({
               width: $bar.owidth + $bar.finaldx,
@@ -1198,6 +1200,8 @@ export default class Gantt {
       }
 
       x_on_scroll_start = e.currentTarget.scrollLeft;
+
+      this.trigger_event('scroll', [e]);
     });
 
     this.bind_bar_progress();

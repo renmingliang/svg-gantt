@@ -8,10 +8,11 @@ $text-light-dark: #ececec;
 $text-color-dark: #f7f7f7;
 $blue-dark: #8a8aff;
 
-.dark > .gantt-container .gantt {
+.dark > .gantt-container {
+  background: #252525;
+
   .grid-header {
-    fill: #252525;
-    stroke: $border-color-dark;
+    background: #252525;
   }
   .grid-row {
     fill: #252525;
