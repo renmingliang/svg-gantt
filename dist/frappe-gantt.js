@@ -602,7 +602,7 @@ var Gantt = (function () {
         height: this.height,
         rx: this.corner_radius,
         ry: this.corner_radius,
-        class: "bar",
+        class: "bar-inner",
         append_to: this.bar_group,
       });
 
@@ -1467,7 +1467,7 @@ var Gantt = (function () {
       // cache index
       task._index = i;
 
-      // invalid dates
+      // empty flag
       if (!task.start && !task.end) {
         task._start = null;
         task._end = null;
@@ -1495,7 +1495,13 @@ var Gantt = (function () {
       }
 
       // invalid flag
-      if (!task.start || !task.end) {
+      if (!task.start) {
+        task.invalid = 'start';
+      }
+      if (!task.end) {
+        task.invalid = 'end';
+      }
+      if (!task.start && !task.end) {
         task.invalid = true;
       }
 
@@ -2395,7 +2401,7 @@ var Gantt = (function () {
             height: bar_height,
             rx: radius,
             ry: radius,
-            class: 'bar-progress',
+            class: 'bar-inner',
             'data-id': matched_task.id,
             append_to: this.layers.progress,
           });
@@ -2578,10 +2584,11 @@ var Gantt = (function () {
         else if (this.view_is('Half Day')) format_str = 'D';
         else if (this.view_is('Hour')) format_str = "D MMMM";
 
-
+        // language
         let currentUpper = date_utils.format(
           date_utils.add(this.gantt_start, daysSinceStart, 'day'),
-          format_str
+          format_str,
+          this.options.language
         );
         const upperTexts = Array.from(document.querySelectorAll('.upper-text'));
         const $el = upperTexts.find(el => el.textContent === currentUpper);

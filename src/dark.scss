@@ -34,7 +34,7 @@ $blue-dark: #8a8aff;
     stroke: $text-muted-dark;
   }
 
-  .bar {
+  .bar-inner {
     fill: $bar-color-dark;
     stroke: none;
   }
@@ -56,7 +56,7 @@ $blue-dark: #8a8aff;
 
   .bar-wrapper {
     &:hover {
-      .bar {
+      .bar-inner {
         fill: lighten($bar-color-dark, 5);
       }
 
@@ -66,7 +66,7 @@ $blue-dark: #8a8aff;
     }
 
     &.active {
-      .bar {
+      .bar-inner {
         fill: lighten($bar-color-dark, 5);
       }
 

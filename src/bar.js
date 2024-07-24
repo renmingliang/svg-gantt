@@ -127,7 +127,7 @@ export default class Bar {
       height: this.height,
       rx: this.corner_radius,
       ry: this.corner_radius,
-      class: "bar",
+      class: "bar-inner",
       append_to: this.bar_group,
     });
 

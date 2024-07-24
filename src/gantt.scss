@@ -172,7 +172,7 @@ $handle-color: #dcdce4 !default;
     stroke-width: 1;
   }
 
-  .bar-wrapper .bar {
+  .bar-inner {
     fill: $bar-color;
     stroke: $bar-stroke;
     stroke-width: 0;
@@ -199,11 +199,11 @@ $handle-color: #dcdce4 !default;
   }
 
   .bar-label {
-    fill: $text-color;
+    fill: $text-light;
     dominant-baseline: central;
     // text-anchor: middle;
-    font-family: Helvetica;
-    font-size: 13px;
+    font-family: "Arial, Roboto, Oxygen, Ubuntu, Cantarell, Fira Sans, Droid Sans, Helvetica Neue";
+    font-size: 14px;
     font-weight: 400;
 
     &.big {
@@ -213,7 +213,7 @@ $handle-color: #dcdce4 !default;
   }
 
   .bar-wrapper.important {
-    .bar {
+    .bar-inner {
       fill: $bar-color-important;
     }
 
@@ -254,7 +254,7 @@ $handle-color: #dcdce4 !default;
       }
     }
 
-    .bar {
+    .bar-inner {
       -webkit-filter: drop-shadow(3px 3px 2px rgba(0, 0, 0, .7));
       filter: drop-shadow(0 0 2px rgba(17, 43, 66, .16));
       border-radius: 3px;
@@ -262,7 +262,7 @@ $handle-color: #dcdce4 !default;
 
 
     &:hover {
-      .bar {
+      .bar-inner {
         transition: transform 0.3s ease;
       }
 

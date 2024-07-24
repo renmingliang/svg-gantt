@@ -41,3 +41,6 @@ If you want to contribute enhancements or fixes:
 5. today - scrollTo 日期居中位置显示；
 6. 未设置开始时间 or 结束时间 -> 相应变更对于时间点 才更新；
 7. 无tasks数据时，空绘制；
+
+### product
+1. 季度
