@@ -40,18 +40,18 @@
       let int = 6;
       function insertData() {
         const mock = {
-          start: '2024-03-28',
-          end: '2024-04-02',
+          start: '2024-02-28 05:32:33',
+          end: '2024-03-02',
           name: 'insert mock_' + int,
           id: 'Task ' + int,
           progress: 10,
           dependencies: 'Task 1, Task 2'
         }
         int += 1;
-        gantt_chart.insert(mock);
+        gantt_chart.insert(mock, 1);
       }
       function deleteData() {
-        console.log('ddd ==> delete')
+        gantt_chart.remove(1);
       }
 
       function init(list) {
@@ -96,7 +96,6 @@
       // console.log('ddd ==> start', gantt_chart);
 
       setTimeout(() => {
-        // gantt_chart = init(tasks);
         gantt_chart.refresh(tasks);
         console.log('ddd ==> update', gantt_chart);
       }, 1000);

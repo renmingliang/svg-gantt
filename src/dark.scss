@@ -17,9 +17,9 @@ $blue-dark: #8a8aff;
   .grid-row {
     fill: #252525;
   }
-  .grid-row:nth-child(even) {
-    fill: $light-bg-dark;
-  }
+  // .grid-row:nth-child(even) {
+  //   fill: $light-bg-dark;
+  // }
   .row-line {
     stroke: $light-border-color-dark;
   }
@@ -76,9 +76,7 @@ $blue-dark: #8a8aff;
     }
   }
 
-  .upper-text {
-    fill: #a2a2a2;
-  }
+  .upper-text,
   .lower-text {
     fill: $text-color-dark;
   }

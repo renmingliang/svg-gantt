@@ -53,8 +53,6 @@ const DEFAULT_OPTIONS = {
   view_mode_select: false,
 };
 
-let count = 0;
-
 export default class Gantt {
   constructor(wrapper, tasks, options) {
     this.setup_wrapper(wrapper);
@@ -73,17 +71,12 @@ export default class Gantt {
       element = document.querySelector(element);
     }
 
-    // count new Constructor
-    $.attr(element, { init: ++count });
-
     // get the SVGElement
     if (element instanceof HTMLElement) {
-      element.innerHTML = "";
       wrapper_element = element;
       svg_element = element.querySelector("svg");
     } else if (element instanceof SVGElement) {
       svg_element = element;
-      // TODO if element is svg
     } else {
       throw new TypeError(
         "Frappé Gantt only supports usage of a string CSS selector," +
@@ -259,60 +252,141 @@ export default class Gantt {
     this.change_view_mode();
   }
 
+  remove(task) {
+    let index = null;
+    if (typeof task === 'object') {
+      const tid = `${task.id}`.replaceAll(' ', '_');
+      index = this.tasks.findIndex((item) => item.id === tid);
+    } else {
+      index = task;
+    }
+    if (index === -1 || index >= this.tasks.length) return;
+    const row_height = this.options.bar_height + this.options.padding;
+
+    // remove tasks bars
+    const remove_bar = this.bars[index];
+    this.layers.bar.removeChild(remove_bar.group);
+    this.tasks.splice(index, 1);
+    this.bars.splice(index, 1);
+
+    // resort task._index
+    let i = index;
+    while (i < this.tasks.length) {
+      this.tasks[i]._index = i;
+      this.bars[i].update_bar_vertical({ offset: -row_height });
+      i+=1;
+    }
+
+    // remove grid-row row-line
+    const rows = this.layers.grid.querySelector('.rows_layer');
+    rows.lastChild && rows.removeChild(rows.lastChild);
+    const lines = this.layers.grid.querySelector('.lines_layer');
+    lines.lastChild && lines.removeChild(lines.lastChild);
+
+    // redraw Arrow
+    this.layers.arrow.innerHTML = "";
+    this.make_arrows();
+    this.map_arrows_on_bars();
+
+    // update grid_height
+    const grid_height = this.tasks.length * row_height;
+    this.$svg.setAttribute("height", grid_height);
+    this.$svg.querySelector(".grid-background").setAttribute("height", grid_height);
+
+    if (this.$today_overlay) {
+      this.$today_overlay.querySelector('.today-highlight').style.height = grid_height + 'px';
+    }
+  }
+
   insert(task, index) {
     const target = index === undefined ? this.tasks.length : index;
-    console.log('ddd ==> insert-target', target);
+
+    const insert_task = this.format_task(task, target)
     // resort task._index
     let i = target;
     while (i < this.tasks.length) {
-      this.tasks[i]._index = i + 1;
+        this.tasks[i]._index = i + 1;
+        i += 1;
+    }
+    // insert task target
+    this.tasks.splice(target, 0, insert_task);
+    this.setup_dependencies();
+
+    // calculate date_start date_end
+    let start, end;
+    if (insert_task._start && insert_task._start < this.gantt_start) {
+      start = insert_task._start;
+    }
+    if (insert_task._end && insert_task._end > this.gantt_end) {
+      end = insert_task._end;
+    }
+    if (start || end) {
+      // need refresh
+      console.log('ddd ==> insert-refresh');
+      this.refresh_view_date();
+      return;
+    }
+    console.log('ddd ==> insert-index', index);
+
+    // update bars y
+    const row_height = this.options.bar_height + this.options.padding;
+    i = target;
+    while (i < this.bars.length) {
+      this.bars[i].update_bar_vertical({ offset: row_height });
       i+=1;
     }
-    // insert format task
-    const insert_task = this.format_task(task, target)
-    this.tasks.splice(target, 0, insert_task);
-    console.log('ddd ==> insert-tasks', this.tasks);
 
-    // new Bar
+    // insert new Bar
     const insert_bar = new Bar(this, insert_task);
     const target_bar = this.bars[target + 1];
     this.layers.bar.insertBefore(insert_bar.group, target_bar ? target_bar.group : null);
     this.bars.splice(target, 0, insert_bar);
 
-    // Arrow
-    // before empty all childs, after appendto arrow-layers
+    // redraw Arrow
     this.layers.arrow.innerHTML = "";
     this.make_arrows();
     this.map_arrows_on_bars();
 
     // append grid-row
     const row_width = this.dates.length * this.options.column_width;
-    const row_height = this.options.bar_height + this.options.padding;
     const insert_y = (this.tasks.length - 1) * row_height;
+    const $grid_el = this.layers.grid;
     createSVG('rect', {
       x: 0,
       y: insert_y,
       width: row_width,
       height: row_height,
       class: 'grid-row',
-      append_to: this.layers.grid.querySelector('.rows_layer'),
+      append_to: $grid_el.querySelector('.rows_layer'),
     });
     // append row-line
-    if (this.options.lines !== 'vertical') {
-      createSVG("line", {
-        x1: 0,
-        y1: insert_y,
-        x2: row_width,
-        y2: insert_y,
-        class: "row-line",
-        append_to: this.layers.grid.querySelector('.lines_layer'),
-      });
+    if ($grid_el.querySelector('.lines_layer')) {
+      if (this.options.lines !== 'vertical') {
+        createSVG("line", {
+          x1: 0,
+          y1: insert_y,
+          x2: row_width,
+          y2: insert_y,
+          class: "row-line",
+          append_to: $grid_el.querySelector('.lines_layer'),
+        });
+      }
     }
 
-    // update height
+    // update grid_height
     const grid_height = this.tasks.length * row_height;
     this.$svg.setAttribute("height", grid_height);
     this.$svg.querySelector(".grid-background").setAttribute("height", grid_height);
+
+    if (this.$today_overlay) {
+      this.$today_overlay.querySelector('.today-highlight').style.height = grid_height + 'px';
+    }
+  }
+
+  refresh_view_date() {
+    this.setup_dates();
+    this.render();
+    this.trigger_event("date_refresh");
   }
 
   change_view_mode(mode = this.options.view_mode) {

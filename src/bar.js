@@ -74,6 +74,35 @@ export default class Bar {
       (this.expected_progress / 100) || 0;
   }
 
+  update_bar_vertical({ offset }) {
+    // recalculate
+    this.compute_y();
+
+    if (this.empty) return;
+    // redraw-bar_group
+    Array.prototype.forEach.call(this.bar_group.children, function (el, i) {
+      const y = $.attr(el, 'y') * 1;
+      el.setAttribute('y', y + offset);
+    });
+    // redraw-thumbnail
+    if (this.task.thumbnail) {
+      const $thumbnail = this.bar_group.querySelector('#rect_' + this.task.id);
+      const y = $.attr($thumbnail, 'y') * 1;
+      $thumbnail.setAttribute('y', y + offset);
+    }
+    // redraw-handle_group
+    Array.prototype.forEach.call(this.handle_group.children, function (el, i, arr) {
+      if (i === arr.length-1) return;
+      const y = $.attr(el, 'y') * 1;
+      el.setAttribute('y', y + offset);
+    });
+    // redraw-polygon
+    const $handle = this.$handle_progress;
+    if ($handle) {
+      $handle.setAttribute('points', this.get_progress_polygon_points());
+    }
+  }
+
   draw() {
     if (this.empty) return;
     this.draw_bar();
@@ -177,6 +206,7 @@ export default class Bar {
     // labels get BBox in the next tick
     requestAnimationFrame(() => this.update_label_position());
   }
+
   draw_thumbnail() {
     let x_offset = 10, y_offset = 2;
     let defs, clipPath;
