@@ -331,8 +331,7 @@ export default class Bar {
       document.querySelector(`#highlight-${task_id}`).style.display = 'none';
     })
 
-
-    $.on(this.group, this.gantt.options.popup_trigger, () => {
+    $.on(this.group, 'click', () => {
       this.gantt.trigger_event("click", [this.task]);
     });
 

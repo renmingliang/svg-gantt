@@ -25,7 +25,7 @@ export default class Popup {
     }
     const target_element = options.target_element;
 
-    if (this.custom_html) {
+    if (typeof this.custom_html === 'function') {
       let html = this.custom_html(options.task);
       html += '<div class="pointer"></div>';
       this.parent.innerHTML = html;

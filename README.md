@@ -34,6 +34,7 @@ If you want to contribute enhancements or fixes:
 
 
 ### TODO
+0. 季度
 1. 拖拽超限 this.gantt_start 与 this.gantt_end，需更新画布；
 2. 点击创建Bar后，make_arrows可动态创建；
 3. 点击事件冲突！！！
@@ -42,5 +43,3 @@ If you want to contribute enhancements or fixes:
 6. 未设置开始时间 or 结束时间 -> 相应变更对于时间点 才更新；
 7. 无tasks数据时，空绘制；
 
-### product
-1. 季度

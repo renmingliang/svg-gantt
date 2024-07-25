@@ -275,9 +275,7 @@
   padding: 10px;
   border-radius: 5px;
   width: max-content;
-}
-.gantt-container .popup-wrapper.hidden {
-  opacity: 0 !important;
+  opacity: 0;
 }
 .gantt-container .popup-wrapper .title {
   margin-bottom: 5px;

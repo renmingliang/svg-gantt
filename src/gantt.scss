@@ -293,10 +293,7 @@ $handle-color: #dcdce4 !default;
     padding: 10px;
     border-radius: 5px;
     width: max-content;
-
-    &.hidden {
-      opacity: 0 !important;
-    }
+    opacity: 0;
 
 
     .title {
