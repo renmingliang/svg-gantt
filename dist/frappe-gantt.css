@@ -274,6 +274,7 @@
   background: #171B1F;
   padding: 10px;
   border-radius: 5px;
+  line-height: 1.2;
   width: max-content;
   opacity: 0;
 }

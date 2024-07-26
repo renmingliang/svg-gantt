@@ -327,7 +327,7 @@ export default class Bar {
 
     $.on(this.group, "mouseleave", () => {
       clearTimeout(timeout)
-      this.gantt.popup?.hide?.()
+      this.gantt.hide_popup();
       document.querySelector(`#highlight-${task_id}`).style.display = 'none';
     })
 

@@ -1,7 +1,8 @@
 export default class Popup {
-  constructor(parent, custom_html) {
+  constructor(parent, options) {
     this.parent = parent;
-    this.custom_html = custom_html;
+    this.options = options;
+    this.custom_html = options.popup;
     this.make();
   }
 
@@ -41,11 +42,11 @@ export default class Popup {
     if (target_element instanceof HTMLElement) {
       position_meta = target_element.getBoundingClientRect();
     } else if (target_element instanceof SVGElement) {
-      position_meta = options.target_element.getBBox();
+      position_meta = target_element.getBBox();
     }
 
     this.parent.style.left = options.x - this.parent.clientWidth / 2 + "px";
-    this.parent.style.top = position_meta.y + position_meta.height + 10 + "px";
+    this.parent.style.top = position_meta.y + position_meta.height + this.options.header_height + 10 + "px";
 
     this.pointer.style.left = this.parent.clientWidth / 2 + "px";
     this.pointer.style.top = "-15px";

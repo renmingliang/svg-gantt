@@ -677,7 +677,7 @@ export default class Gantt {
         $option.textContent = modes[key];
         $select.appendChild($option);
       }
-      // $select.value = this.options.view_mode
+      $select.value = this.options.view_mode
       $select.addEventListener("change", (function () {
         this.change_view_mode($select.value)
       }).bind(this));
@@ -1570,11 +1570,12 @@ export default class Gantt {
   }
 
   show_popup(options) {
+    console.log('ddd ==> show_popup', options);
     if (this.options.popup === false) return
     if (!this.popup) {
       this.popup = new Popup(
         this.$popup_wrapper,
-        this.options.popup,
+        this.options,
       );
     }
     this.popup.show(options);
@@ -1615,7 +1616,7 @@ export default class Gantt {
     this.$container_toolbar.innerHTML = "";
     this.$header?.remove?.()
     this.$today_overlay?.remove?.();
-    this.popup?.hide?.()
+    this.hide_popup();
   }
 }
 

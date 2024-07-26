@@ -802,7 +802,7 @@ var Gantt = (function () {
 
       $.on(this.group, "mouseleave", () => {
         clearTimeout(timeout);
-        this.gantt.popup?.hide?.();
+        this.gantt.hide_popup();
         document.querySelector(`#highlight-${task_id}`).style.display = 'none';
       });
 
@@ -1219,9 +1219,10 @@ var Gantt = (function () {
   }
 
   class Popup {
-    constructor(parent, custom_html) {
+    constructor(parent, options) {
       this.parent = parent;
-      this.custom_html = custom_html;
+      this.options = options;
+      this.custom_html = options.popup;
       this.make();
     }
 
@@ -1261,11 +1262,11 @@ var Gantt = (function () {
       if (target_element instanceof HTMLElement) {
         position_meta = target_element.getBoundingClientRect();
       } else if (target_element instanceof SVGElement) {
-        position_meta = options.target_element.getBBox();
+        position_meta = target_element.getBBox();
       }
 
       this.parent.style.left = options.x - this.parent.clientWidth / 2 + "px";
-      this.parent.style.top = position_meta.y + position_meta.height + 10 + "px";
+      this.parent.style.top = position_meta.y + position_meta.height + this.options.header_height + 10 + "px";
 
       this.pointer.style.left = this.parent.clientWidth / 2 + "px";
       this.pointer.style.top = "-15px";
@@ -1949,7 +1950,7 @@ var Gantt = (function () {
           $option.textContent = modes[key];
           $select.appendChild($option);
         }
-        // $select.value = this.options.view_mode
+        $select.value = this.options.view_mode;
         $select.addEventListener("change", (function () {
           this.change_view_mode($select.value);
         }).bind(this));
@@ -2842,11 +2843,12 @@ var Gantt = (function () {
     }
 
     show_popup(options) {
+      console.log('ddd ==> show_popup', options);
       if (this.options.popup === false) return
       if (!this.popup) {
         this.popup = new Popup(
           this.$popup_wrapper,
-          this.options.popup,
+          this.options,
         );
       }
       this.popup.show(options);
@@ -2887,7 +2889,7 @@ var Gantt = (function () {
       this.$container_toolbar.innerHTML = "";
       this.$header?.remove?.();
       this.$today_overlay?.remove?.();
-      this.popup?.hide?.();
+      this.hide_popup();
     }
   }
 
