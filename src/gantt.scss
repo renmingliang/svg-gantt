@@ -73,6 +73,11 @@ $handle-color: #dcdce4 !default;
     font-size: 16px;
   }
 
+  .tick-line {
+    background: $tick-color-thick;
+    position: absolute;
+  }
+
   .current-upper {
     // position: fixed;
     position: sticky;

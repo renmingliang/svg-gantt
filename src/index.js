@@ -24,8 +24,8 @@ const VIEW_MODE_PADDING = {
   DAY: ["1m", "1m"],
   WEEK: ["1m", "1m"],
   MONTH: ["1y", "1y"],
-  QUARTER_YEAR: ["2y", "2y"],
-  YEAR: ["3y", "3y"],
+  QUARTER_YEAR: ["1y", "1y"],
+  YEAR: ["2y", "2y"],
 };
 
 const DEFAULT_OPTIONS = {
@@ -658,6 +658,11 @@ export default class Gantt {
     this.$lower_header = $lower_header
     this.$header.appendChild($lower_header)
 
+    let $line_header = document.createElement('div');
+    $line_header.classList.add('line-header');
+    this.$line_header = $line_header;
+    this.$header.appendChild($line_header);
+
     this.$container_header.appendChild(this.$header);
   }
 
@@ -734,29 +739,8 @@ export default class Gantt {
     if (this.options.lines === 'horizontal') return;
     for (let date of this.dates) {
       let tick_class = "tick";
-      // thick tick for monday
-      if (this.view_is(VIEW_MODE.DAY) && date.getDate() === 1) {
-        tick_class += " thick";
-      }
-      // thick tick for first week
-      if (
-        this.view_is(VIEW_MODE.WEEK) &&
-        date.getDate() >= 1 &&
-        date.getDate() < 8
-      ) {
-        tick_class += " thick";
-      }
-      // thick ticks for quarters
-      if (this.view_is(VIEW_MODE.MONTH) && date.getMonth() % 3 === 0) {
-        tick_class += " thick";
-      }
-      // thick ticks for quarter_year
-      if (this.view_is(VIEW_MODE.QUARTER_YEAR) && date.getMonth() === 0) {
+      if (this.get_thick_mode(date)) {
         tick_class += ' thick';
-      }
-      // thick ticks for year
-      if (this.view_is(VIEW_MODE.YEAR)) {
-        tick_class += " thick";
       }
 
       createSVG("path", {
@@ -772,6 +756,35 @@ export default class Gantt {
         tick_x += this.options.column_width;
       }
     }
+  }
+
+  get_thick_mode(date) {
+    let thick = false;
+    // thick tick for monday
+    if (this.view_is(VIEW_MODE.DAY) && date.getDate() === 1) {
+      thick = true;
+    }
+    // thick tick for first week
+    if (
+      this.view_is(VIEW_MODE.WEEK) &&
+      date.getDate() >= 1 &&
+      date.getDate() < 8
+    ) {
+      thick = true;
+    }
+    // thick ticks for quarters
+    if (this.view_is(VIEW_MODE.MONTH) && date.getMonth() % 3 === 0) {
+      thick = true;
+    }
+    // thick ticks for quarter_year
+    if (this.view_is(VIEW_MODE.QUARTER_YEAR) && date.getMonth() === 0) {
+      thick = true;
+    }
+    // thick ticks for year
+    if (this.view_is(VIEW_MODE.YEAR)) {
+      thick = true;
+    }
+    return thick;
   }
 
   highlightWeekends() {
@@ -884,22 +897,29 @@ export default class Gantt {
         classes: 'lower-text',
         append_to: this.$lower_header
       })
-      $lower_text.innerText = date.lower_text
-      $lower_text.style.left = +$lower_text.style.left.slice(0, -2) - $lower_text.clientWidth / 2 + 'px'
+      $lower_text.innerText = date.lower_text;
+      $lower_text.style.left = +$lower_text.style.left.slice(0, -2) - $lower_text.clientWidth / 2 + 'px';
 
       if (date.upper_text) {
-        this.upper_texts_x[date.upper_text] = date.upper_x
-        let $upper_text = document.createElement('div');
-        $upper_text.classList.add('upper-text')
-        $upper_text.style.left = date.upper_x + 'px'
-        $upper_text.style.top = date.upper_y + 'px'
-        $upper_text.innerText = date.upper_text
-        this.$upper_header.appendChild($upper_text)
+        this.upper_texts_x[date.upper_text] = date.upper_x;
+        let $upper_text = this.create_el({
+            left: date.upper_x,
+            top: date.upper_y,
+            classes: 'upper-text',
+            append_to: this.$upper_header,
+        });
+        $upper_text.innerText = date.upper_text;
+      }
 
-        // TODO remove out-of-bound dates
-        // if (date.upper_x > this.layers.grid.getBBox().width) {
-        //   $upper_text.remove();
-        // }
+      if (date.tick_line) {
+        this.create_el({
+            left: date.base_pos_x - 1,
+            top: date.lower_y,
+            width: 2,
+            height: this.options.header_height - 20,
+            classes: 'tick-line',
+            append_to: this.$line_header,
+        });
       }
     })
   }
@@ -976,8 +996,13 @@ export default class Gantt {
         ? last_date_info.base_pos_x + last_date_info.column_width
         : 0,
       lower_y: this.options.header_height - 20,
-      upper_y: this.options.header_height - 50,
+      upper_y: Math.max(6, this.options.header_height - 50),
     };
+
+    const base_tick = {
+      line: this.get_thick_mode(date),
+    };
+
     // starting_point upper:center-or-start lower:center
     const x_pos = {
       Hour_lower: column_width / 2,
@@ -1010,6 +1035,7 @@ export default class Gantt {
       upper_y: base_pos.upper_y,
       lower_x: base_pos.x + x_pos[`${this.options.view_mode}_lower`],
       lower_y: base_pos.lower_y,
+      tick_line: base_tick.line,
     };
   }
 

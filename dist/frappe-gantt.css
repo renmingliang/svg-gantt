@@ -110,6 +110,10 @@
   font-weight: 500;
   font-size: 16px;
 }
+.gantt-container .tick-line {
+  background: #e0e0e0;
+  position: absolute;
+}
 .gantt-container .current-upper {
   position: sticky;
 }
