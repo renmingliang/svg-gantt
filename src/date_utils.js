@@ -102,18 +102,23 @@ export default {
     const month_name_capitalized =
       month_name.charAt(0).toUpperCase() + month_name.slice(1);
 
-    const values = this.get_date_values(date).map((d) => padStart(d, 2, 0));
+    const values = this.get_date_values(date);
     const format_map = {
       YYYY: values[0],
-      MM: padStart(+values[1] + 1, 2, 0),
-      DD: values[2],
-      HH: values[3],
-      mm: values[4],
-      ss: values[5],
-      SSS: values[6],
+      MM: padStart(values[1] + 1, 2, 0),
+      DD: padStart(values[2], 2, 0),
+      HH: padStart(values[3], 2, 0),
+      mm: padStart(values[4], 2, 0),
+      ss: padStart(values[5], 2, 0),
+      M: values[1] + 1,
       D: values[2],
+      h: values[3],
+      m: values[4],
+      s: values[5],
+      SSS: values[6],
+      Q: parseInt((values[1] + 1) / 3) + 1,
       MMMM: month_name_capitalized,
-      MMM: SHORTENED[month_name_capitalized],
+      MMM: SHORTENED[month_name_capitalized] || month_name_capitalized,
     };
 
     let str = format_string;

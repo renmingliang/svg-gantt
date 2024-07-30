@@ -111,7 +111,7 @@
   font-size: 16px;
 }
 .gantt-container .current-upper {
-  position: fixed;
+  position: sticky;
 }
 .gantt-container .today-button,
 .gantt-container .viewmode-select {
@@ -170,8 +170,8 @@
   fill: #ffffff;
 }
 .gantt .row-line {
-  stroke: #ebeff2;
-  stroke-width: 0.4;
+  stroke: #f5f5f5;
+  stroke-width: 1;
 }
 .gantt .tick {
   stroke: #ebeef0;
@@ -179,7 +179,7 @@
 }
 .gantt .tick.thick {
   stroke: #e0e0e0;
-  stroke-width: 0.7;
+  stroke-width: 1;
 }
 .gantt .holiday-highlight {
   fill: #F9FAFA;

@@ -92,7 +92,7 @@ export default class Bar {
     }
     // redraw-handle_group
     Array.prototype.forEach.call(this.handle_group.children, function (el, i, arr) {
-      if (i === arr.length-1) return;
+      // if (i === arr.length-1) return;
       const y = $.attr(el, 'y') * 1;
       el.setAttribute('y', y + offset);
     });
@@ -278,11 +278,13 @@ export default class Bar {
       append_to: this.handle_group,
     });
 
-    this.$handle_progress = createSVG("polygon", {
-      points: this.get_progress_polygon_points().join(","),
-      class: "handle progress",
-      append_to: this.handle_group,
-    });
+    if (this.gantt.options.drag_bar_progress) {
+      this.$handle_progress = createSVG('polygon', {
+        points: this.get_progress_polygon_points().join(','),
+        class: 'handle progress',
+        append_to: this.handle_group,
+      });
+    }
   }
 
   get_progress_polygon_points() {
@@ -350,12 +352,12 @@ export default class Bar {
 
     const start_date = date_utils.format(
       this.task._start,
-      "MMM D",
+      "MM月DD日",
       this.gantt.options.language,
     );
     const end_date = date_utils.format(
       date_utils.add(this.task._end, -1, "second"),
-      "MMM D",
+      "MM月DD日",
       this.gantt.options.language,
     );
     const subtitle = `${start_date} -  ${end_date}<br/>Progress: ${this.task.progress}`;
@@ -453,7 +455,14 @@ export default class Bar {
 
     if (!changed) return;
 
-    // TODO new_start_date > this.gantt_start or new_end_date > this.gantt_end
+    // TODO out of limit to redraw
+    // if (
+    //     new_start_date < this.gantt.gantt_start ||
+    //     new_end_date > this.gantt.gantt_end
+    // ) {
+    //     this.gantt.refresh_view_date();
+    //     return;
+    // }
 
     this.gantt.trigger_event("date_change", [
       this.task,
@@ -648,7 +657,7 @@ export default class Bar {
     this.handle_group
       .querySelector(".handle.right")
       .setAttribute("x", bar.getEndX() - handle_width - 1);
-    const handle = this.group.querySelector(".handle.progress");
+    const handle = this.handle_group.querySelector('.handle.progress');
     handle && handle.setAttribute("points", this.get_progress_polygon_points());
   }
 

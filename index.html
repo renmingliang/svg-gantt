@@ -74,32 +74,26 @@
           // on_hover: (task, x, y) => {
           //   console.log("Hover", x, y);
           // },
-          // view_mode: "Quarter Year",
           view_mode: "Day",
           view_mode_padding: { DAY: "5d" },
           popup: true,
           auto_move_label: false,
           view_mode_select: true,
-          // height: 200,
-          // lines: 'xxx',
-          // language: 'zh',
+          lines: 'horizontal',
+          language: 'zh',
+          drag_bar_progress: false, // 拖拽进度条
           // drag_sync_child: true, // 子级同步拖拽
+          // height: 200,
           // scroll_to: 'today',
           // today_button: false,
           // readonly: true,
-          // lines: 'vertical',
           // lower_text: (date) => date.getDay(),
           // upper_text: (date, view_mode, def) => def,
         });
       }
 
-      let gantt_chart = init([]);
-      // console.log('ddd ==> start', gantt_chart);
-
-      setTimeout(() => {
-        gantt_chart.refresh(tasks);
-        console.log('ddd ==> update', gantt_chart);
-      }, 1000);
+      const gantt_chart = init(tasks);
+      console.log('ddd ==> start', gantt_chart);
     </script>
   </body>
 </html>
