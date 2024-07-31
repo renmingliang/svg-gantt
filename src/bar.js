@@ -171,21 +171,6 @@ export default class Bar {
       class: "bar-progress",
       append_to: this.bar_group,
     });
-    const x = (date_utils.diff(this.task._start, this.gantt.gantt_start, 'hour') /
-      this.gantt.options.step) *
-      this.gantt.options.column_width;
-
-    // TODO 待优化-只需渲染一个
-    let $date_highlight = document.createElement("div");
-    $date_highlight.id = `highlight-${this.task.id}`;
-    $date_highlight.classList.add('date-highlight')
-    $date_highlight.style.height = this.height * 0.8 + 'px'
-    $date_highlight.style.width = this.width + 'px'
-    $date_highlight.style.top = this.gantt.options.header_height - 25 + 'px'
-    $date_highlight.style.left = x + 'px'
-    this.$date_highlight = $date_highlight
-    this.gantt.$lower_header.prepend($date_highlight)
-
     animateSVG(this.$bar_progress, "width", 0, this.progress_width);
   }
 
@@ -316,21 +301,19 @@ export default class Bar {
   }
 
   setup_click_event() {
-    let task_id = this.task.id;
     $.on(this.group, "mouseover", (e) => {
       this.gantt.trigger_event("hover", [this.task, e.screenX, e.screenY, e])
     })
 
     let timeout;
     $.on(this.group, "mouseenter", (e) => timeout = setTimeout(() => {
-      this.show_popup(e.offsetX)
-      document.querySelector(`#highlight-${task_id}`).style.display = 'block';
+      const scrollLeft = this.gantt.$container_main.scrollLeft;
+      this.show_popup(e.offsetX - scrollLeft);
     }, 200))
 
     $.on(this.group, "mouseleave", () => {
       clearTimeout(timeout)
       this.gantt.hide_popup();
-      document.querySelector(`#highlight-${task_id}`).style.display = 'none';
     })
 
     $.on(this.group, 'click', () => {

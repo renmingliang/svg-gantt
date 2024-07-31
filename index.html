@@ -33,6 +33,8 @@
 
       <button onclick="insertData()">插入一条数据</button>
       <button onclick="deleteData()">删除一条数据</button>
+
+      <button onclick="showdrop()">拖拽背景</button>
     </div>
     <script src="./const.js"></script>
     <script>
@@ -52,6 +54,10 @@
       }
       function deleteData() {
         gantt_chart.remove(1);
+      }
+
+      function showdrop() {
+        gantt_chart.show_backdrop({ x: 0, width: 100, range: ['07-16', '07-30']})
       }
 
       function init(list) {
@@ -75,17 +81,19 @@
           //   console.log("Hover", x, y);
           // },
           view_mode: "Day",
-          view_mode_padding: { DAY: "5d" },
+          view_mode_padding: { DAY: "15d" },
           popup: true,
           auto_move_label: false,
           view_mode_select: true,
+          // show_expected_progress: true,
           // lines: 'horizontal',
+          // dependencies: false,
           header_height: 48,
           language: 'zh',
-          drag_bar_progress: false, // 拖拽进度条
+          drag_bar_progress: false, // 进度条可拖拽
           // drag_sync_child: true, // 子级同步拖拽
           // height: 200,
-          // scroll_to: 'today',
+          // scroll_to: 'today', // 1/3位置
           // today_button: false,
           // readonly: true,
           // lower_text: (date) => date.getDay(),

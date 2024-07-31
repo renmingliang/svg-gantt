@@ -651,21 +651,6 @@ var Gantt = (function () {
         class: "bar-progress",
         append_to: this.bar_group,
       });
-      const x = (date_utils.diff(this.task._start, this.gantt.gantt_start, 'hour') /
-        this.gantt.options.step) *
-        this.gantt.options.column_width;
-
-      // TODO 待优化-只需渲染一个
-      let $date_highlight = document.createElement("div");
-      $date_highlight.id = `highlight-${this.task.id}`;
-      $date_highlight.classList.add('date-highlight');
-      $date_highlight.style.height = this.height * 0.8 + 'px';
-      $date_highlight.style.width = this.width + 'px';
-      $date_highlight.style.top = this.gantt.options.header_height - 25 + 'px';
-      $date_highlight.style.left = x + 'px';
-      this.$date_highlight = $date_highlight;
-      this.gantt.$lower_header.prepend($date_highlight);
-
       animateSVG(this.$bar_progress, "width", 0, this.progress_width);
     }
 
@@ -796,21 +781,19 @@ var Gantt = (function () {
     }
 
     setup_click_event() {
-      let task_id = this.task.id;
       $.on(this.group, "mouseover", (e) => {
         this.gantt.trigger_event("hover", [this.task, e.screenX, e.screenY, e]);
       });
 
       let timeout;
       $.on(this.group, "mouseenter", (e) => timeout = setTimeout(() => {
-        this.show_popup(e.offsetX);
-        document.querySelector(`#highlight-${task_id}`).style.display = 'block';
+        const scrollLeft = this.gantt.$container_main.scrollLeft;
+        this.show_popup(e.offsetX - scrollLeft);
       }, 200));
 
       $.on(this.group, "mouseleave", () => {
         clearTimeout(timeout);
         this.gantt.hide_popup();
-        document.querySelector(`#highlight-${task_id}`).style.display = 'none';
       });
 
       $.on(this.group, 'click', () => {
@@ -1233,19 +1216,19 @@ var Gantt = (function () {
   }
 
   class Popup {
-    constructor(parent, options) {
+    constructor(gantt, parent) {
+      this.gantt = gantt;
       this.parent = parent;
-      this.options = options;
-      this.custom_html = options.popup;
+      this.custom_html = gantt.options.popup;
       this.make();
     }
 
     make() {
       this.parent.innerHTML = `
-            <div class="title"></div>
-            <div class="subtitle"></div>
-            <div class="pointer"></div>
-        `;
+        <div class="title"></div>
+        <div class="subtitle"></div>
+        <div class="pointer"></div>
+    `;
 
       this.hide();
 
@@ -1278,11 +1261,30 @@ var Gantt = (function () {
       } else if (target_element instanceof SVGElement) {
         position_meta = target_element.getBBox();
       }
+      const parentWidth = this.parent.clientWidth;
+      const parentHeight = this.parent.clientHeight;
+      const ganttOptions = this.gantt.options;
+      const ganttWidth = this.gantt.$container.clientWidth;
+      const ganttHeight = this.gantt.$container.clientHeight;
 
-      this.parent.style.left = options.x - this.parent.clientWidth / 2 + "px";
-      this.parent.style.top = position_meta.y + position_meta.height + this.options.header_height + 10 + "px";
+      // get position
+      let pos_x = options.x - parentWidth / 2;
+      let pos_y = position_meta.y + position_meta.height + ganttOptions.header_height + 10;
 
-      this.pointer.style.left = this.parent.clientWidth / 2 + "px";
+      if (pos_y > ganttHeight - parentHeight) {
+        pos_y = position_meta.y - parentHeight - 10 + ganttOptions.header_height;
+      }
+
+      if (pos_x > ganttWidth - parentWidth) {
+        console.log("ddd ==> out x");
+        const diff = pos_x - (ganttWidth - parentWidth - 5);
+        pos_x -= diff;
+      }
+
+      this.parent.style.left = pos_x + "px";
+      this.parent.style.top = pos_y + "px";
+
+      this.pointer.style.left = parentWidth / 2 + 'px';
       this.pointer.style.top = "-15px";
 
       // show
@@ -1292,6 +1294,48 @@ var Gantt = (function () {
     hide() {
       this.parent.style.opacity = 0;
       this.parent.style.left = 0;
+    }
+  }
+
+  class Backdrop {
+    constructor(parent) {
+      this.parent = parent;
+      this.make();
+    }
+
+    make() {
+      this.parent.innerHTML = `
+      <div class="gantt-drag-mask">
+        <div class="date-range"></div>
+      </div>
+    `;
+
+      // this.hide();
+
+      this.drag_mask = this.parent.querySelector('.gantt-drag-mask');
+      this.date_range = this.parent.querySelector('.date-range');
+    }
+
+    showAt({ x, width, range }) {
+      if (range && range.length) {
+        const htmlHold = `<span>${range[0]}</span><span>${range[1]}</span>`;
+        this.date_range.innerHTML = htmlHold;
+      }
+
+      this.drag_mask.style.left = x + 'px';
+      this.drag_mask.style.width = width + 'px';
+
+      this.show();
+    }
+
+    show() {
+      this.parent.style.display = 'block';
+      this.drag_mask.style.display = 'block';
+    }
+
+    hide() {
+      this.parent.style.display = "none";
+      this.drag_mask.style.display = "none";
     }
   }
 
@@ -1317,6 +1361,12 @@ var Gantt = (function () {
     YEAR: ["2y", "2y"],
   };
 
+  const TICK_LINE = {
+    BOTH: "both",
+    HORIZONTAL: "horizontal",
+    VERTICAL: "vertical",
+  };
+
   const DEFAULT_OPTIONS = {
     header_height: 65,
     // column_width: 30,
@@ -1331,6 +1381,7 @@ var Gantt = (function () {
     date_format: "YYYY-MM-DD",
     popup_trigger: "click",
     show_expected_progress: false,
+    dependencies: "arrow",
     drag_bar_progress: true,
     drag_sync_child: false,
     drag_limit_child: false,
@@ -1339,7 +1390,7 @@ var Gantt = (function () {
     readonly: false,
     highlight_weekend: true,
     scroll_to: 'start',
-    lines: 'both',
+    lines: TICK_LINE.BOTH,
     auto_move_label: true,
     today_button: true,
     view_mode_select: false,
@@ -1356,66 +1407,71 @@ var Gantt = (function () {
     }
 
     setup_wrapper(element) {
-      let svg_element, wrapper_element;
+        let svg_element, wrapper_element;
 
-      // CSS Selector is passed
-      if (typeof element === "string") {
-        element = document.querySelector(element);
-      }
+        // CSS Selector is passed
+        if (typeof element === 'string') {
+            element = document.querySelector(element);
+        }
 
-      // get the SVGElement
-      if (element instanceof HTMLElement) {
-        wrapper_element = element;
-        svg_element = element.querySelector("svg");
-      } else if (element instanceof SVGElement) {
-        svg_element = element;
-      } else {
-        throw new TypeError(
-          "Frappé Gantt only supports usage of a string CSS selector," +
-          " HTML DOM element or SVG DOM element for the 'element' parameter",
-        );
-      }
+        // get the SVGElement
+        if (element instanceof HTMLElement) {
+            wrapper_element = element;
+            svg_element = element.querySelector('svg');
+        } else if (element instanceof SVGElement) {
+            svg_element = element;
+        } else {
+            throw new TypeError(
+                'Frappé Gantt only supports usage of a string CSS selector,' +
+                    " HTML DOM element or SVG DOM element for the 'element' parameter",
+            );
+        }
 
-      // svg element
-      if (!svg_element) {
-        // create it
-        this.$svg = createSVG("svg", {
-          append_to: wrapper_element,
-          class: "gantt",
-        });
-      } else {
-        this.$svg = svg_element;
-        this.$svg.classList.add("gantt");
-      }
+        // svg element
+        if (!svg_element) {
+            // create it
+            this.$svg = createSVG('svg', {
+                append_to: wrapper_element,
+                class: 'gantt',
+            });
+        } else {
+            this.$svg = svg_element;
+            this.$svg.classList.add('gantt');
+        }
 
-      // wrapper element
-      this.$container = document.createElement("div");
-      this.$container.classList.add("gantt-container");
+        // container element
+        this.$container = document.createElement('div');
+        this.$container.classList.add('gantt-container');
 
-      // 1.header horizontal-scroll
-      this.$container_header = document.createElement('div');
-      this.$container_header.classList.add('gantt-container_header');
-      this.$container.appendChild(this.$container_header);
+        // 1.header horizontal-scroll
+        this.$container_header = document.createElement('div');
+        this.$container_header.classList.add('gantt-container_header');
+        this.$container.appendChild(this.$container_header);
 
-      // 2.main vertical-scroll
-      this.$container_main = document.createElement('div');
-      this.$container_main.classList.add('gantt-container_main');
-      this.$container.appendChild(this.$container_main);
+        // 2.main vertical-scroll
+        this.$container_main = document.createElement('div');
+        this.$container_main.classList.add('gantt-container_main');
+        this.$container.appendChild(this.$container_main);
 
-      // 3. appendTo wrapper
-      const parent_element = this.$svg.parentElement;
-      parent_element.appendChild(this.$container);
-      this.$container_main.appendChild(this.$svg);
+        // 3. svg appendTo wrapper
+        const parent_element = this.$svg.parentElement;
+        parent_element.appendChild(this.$container);
+        this.$container_main.appendChild(this.$svg);
 
-      // 4. toobar wrapper
-      this.$container_toolbar = document.createElement('div');
-      this.$container_toolbar.classList.add('gantt-container_toolbar');
-      this.$container.appendChild(this.$container_toolbar);
+        // 4. toobar wrapper
+        this.$container_toolbar = document.createElement('div');
+        this.$container_toolbar.classList.add('gantt-container_toolbar');
+        this.$container.appendChild(this.$container_toolbar);
 
-      // 4.popup wrapper
-      this.$popup_wrapper = document.createElement("div");
-      this.$popup_wrapper.classList.add("popup-wrapper");
-      this.$container.appendChild(this.$popup_wrapper);
+        // 5.popup wrapper
+        this.$popup_wrapper = document.createElement('div');
+        this.$popup_wrapper.classList.add('gantt-popup-wrapper');
+        this.$container.appendChild(this.$popup_wrapper);
+
+        // 6.backdrop wrapper
+        this.$drag_backdrop = document.createElement('div');
+        this.$drag_backdrop.classList.add('gantt-drag-backdrop');
+        this.$container.appendChild(this.$drag_backdrop);
     }
 
     setup_options(options) {
@@ -1662,7 +1718,7 @@ var Gantt = (function () {
       });
       // append row-line
       if ($grid_el.querySelector('.lines_layer')) {
-        if (this.options.lines !== 'vertical') {
+        if (this.options.lines !== TICK_LINE.VERTICAL) {
           createSVG("line", {
             x1: 0,
             y1: insert_y,
@@ -1922,7 +1978,10 @@ var Gantt = (function () {
           class: "grid-row",
           append_to: rows_layer,
         });
-        if (this.options.lines === 'both' || this.options.lines === 'horizontal') ;
+        if (
+            this.options.lines === TICK_LINE.BOTH ||
+            this.options.lines === TICK_LINE.HORIZONTAL
+        ) ;
 
         row_y += this.options.bar_height + this.options.padding;
       }
@@ -1997,7 +2056,7 @@ var Gantt = (function () {
     }
 
     make_grid_ticks() {
-      if (!['both', 'vertical', 'horizontal'].includes(this.options.lines)) return
+      if (!Object.values(TICK_LINE).includes(this.options.lines)) return;
       let tick_x = 0;
       let tick_y = 0;
       let tick_height = 5000; // assert infinity
@@ -2010,7 +2069,7 @@ var Gantt = (function () {
 
       const row_width = this.dates.length * this.options.column_width;
       const row_height = this.options.bar_height + this.options.padding;
-      if (this.options.lines !== 'vertical') {
+      if (this.options.lines !== TICK_LINE.VERTICAL) {
         for (let _ of this.tasks) {
           createSVG("line", {
             x1: 0,
@@ -2023,7 +2082,7 @@ var Gantt = (function () {
           row_y += row_height;
         }
       }
-      if (this.options.lines === 'horizontal') return;
+      if (this.options.lines === TICK_LINE.HORIZONTAL) return;
       for (let date of this.dates) {
         let tick_class = "tick";
         if (this.get_thick_mode(date)) {
@@ -2336,6 +2395,7 @@ var Gantt = (function () {
 
     make_arrows() {
       this.arrows = [];
+      if (!this.options.dependencies) return;
       for (let task of this.tasks) {
         let arrows = [];
         arrows = task.dependencies
@@ -2459,7 +2519,7 @@ var Gantt = (function () {
       const bar_height = this.options.bar_height;
       const row_height = bar_height + this.options.padding;
 
-      $.on(this.$svg, "mousedown", ".grid-row", (e) => {
+      $.on(this.$svg, "mousedown", (e) => {
         // location
         const index = parseInt(e.offsetY / row_height);
         matched_task = this.tasks[index];
@@ -2634,11 +2694,28 @@ var Gantt = (function () {
           } else if (is_dragging && !this.options.readonly) {
             bar.update_bar_position({ x: $bar.ox + $bar.finaldx });
           }
+
+          // show drag_backdrop
+          if (parent_bar_id === bar.task.id) {
+            let x = 0;
+            const scrollLeft = this.$container_main.scrollLeft;
+            if (is_resizing_right) {
+              x = $bar.ox - scrollLeft;
+            } else {
+              x = $bar.ox + $bar.finaldx - scrollLeft;
+            }
+            this.show_backdrop({
+                x: x,
+                width: $bar.getWidth(),
+                bar,
+            });
+          }
         });
       });
 
       $.on(this.$svg, "mouseup", () => {
         this.bar_being_dragged = null;
+        this.hide_backdrop();
         bars.forEach((bar) => {
           if (bar.empty) return;
           const $bar = bar.$bar;
@@ -2886,12 +2963,27 @@ var Gantt = (function () {
       });
     }
 
+    show_backdrop({ x, width, bar }) {
+      if (!this.backdrop) {
+        this.backdrop = new Backdrop(this.$drag_backdrop);
+      }
+
+      const { new_start_date, new_end_date } = bar.compute_start_end_date();
+      const date_start = date_utils.format(new_start_date, 'MM-DD');
+      const date_end = date_utils.format(new_end_date, 'MM-DD');
+      this.backdrop.showAt({ x, width, range: [date_start, date_end] });
+    }
+
+    hide_backdrop() {
+      this.backdrop && this.backdrop.hide();
+    };
+
     show_popup(options) {
       if (this.options.popup === false) return
       if (!this.popup) {
         this.popup = new Popup(
+          this,
           this.$popup_wrapper,
-          this.options,
         );
       }
       this.popup.show(options);

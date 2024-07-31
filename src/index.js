@@ -5,6 +5,7 @@ import Arrow from "./arrow";
 import Popup from "./popup";
 
 import "./gantt.scss";
+import Backdrop from "./backdrop";
 
 const VIEW_MODE = {
   HOUR: "Hour",
@@ -28,6 +29,12 @@ const VIEW_MODE_PADDING = {
   YEAR: ["2y", "2y"],
 };
 
+const TICK_LINE = {
+  BOTH: "both",
+  HORIZONTAL: "horizontal",
+  VERTICAL: "vertical",
+}
+
 const DEFAULT_OPTIONS = {
   header_height: 65,
   // column_width: 30,
@@ -42,6 +49,7 @@ const DEFAULT_OPTIONS = {
   date_format: "YYYY-MM-DD",
   popup_trigger: "click",
   show_expected_progress: false,
+  dependencies: "arrow",
   drag_bar_progress: true,
   drag_sync_child: false,
   drag_limit_child: false,
@@ -50,7 +58,7 @@ const DEFAULT_OPTIONS = {
   readonly: false,
   highlight_weekend: true,
   scroll_to: 'start',
-  lines: 'both',
+  lines: TICK_LINE.BOTH,
   auto_move_label: true,
   today_button: true,
   view_mode_select: false,
@@ -67,66 +75,71 @@ export default class Gantt {
   }
 
   setup_wrapper(element) {
-    let svg_element, wrapper_element;
+      let svg_element, wrapper_element;
 
-    // CSS Selector is passed
-    if (typeof element === "string") {
-      element = document.querySelector(element);
-    }
+      // CSS Selector is passed
+      if (typeof element === 'string') {
+          element = document.querySelector(element);
+      }
 
-    // get the SVGElement
-    if (element instanceof HTMLElement) {
-      wrapper_element = element;
-      svg_element = element.querySelector("svg");
-    } else if (element instanceof SVGElement) {
-      svg_element = element;
-    } else {
-      throw new TypeError(
-        "Frappé Gantt only supports usage of a string CSS selector," +
-        " HTML DOM element or SVG DOM element for the 'element' parameter",
-      );
-    }
+      // get the SVGElement
+      if (element instanceof HTMLElement) {
+          wrapper_element = element;
+          svg_element = element.querySelector('svg');
+      } else if (element instanceof SVGElement) {
+          svg_element = element;
+      } else {
+          throw new TypeError(
+              'Frappé Gantt only supports usage of a string CSS selector,' +
+                  " HTML DOM element or SVG DOM element for the 'element' parameter",
+          );
+      }
 
-    // svg element
-    if (!svg_element) {
-      // create it
-      this.$svg = createSVG("svg", {
-        append_to: wrapper_element,
-        class: "gantt",
-      });
-    } else {
-      this.$svg = svg_element;
-      this.$svg.classList.add("gantt");
-    }
+      // svg element
+      if (!svg_element) {
+          // create it
+          this.$svg = createSVG('svg', {
+              append_to: wrapper_element,
+              class: 'gantt',
+          });
+      } else {
+          this.$svg = svg_element;
+          this.$svg.classList.add('gantt');
+      }
 
-    // wrapper element
-    this.$container = document.createElement("div");
-    this.$container.classList.add("gantt-container");
+      // container element
+      this.$container = document.createElement('div');
+      this.$container.classList.add('gantt-container');
 
-    // 1.header horizontal-scroll
-    this.$container_header = document.createElement('div');
-    this.$container_header.classList.add('gantt-container_header');
-    this.$container.appendChild(this.$container_header);
+      // 1.header horizontal-scroll
+      this.$container_header = document.createElement('div');
+      this.$container_header.classList.add('gantt-container_header');
+      this.$container.appendChild(this.$container_header);
 
-    // 2.main vertical-scroll
-    this.$container_main = document.createElement('div');
-    this.$container_main.classList.add('gantt-container_main');
-    this.$container.appendChild(this.$container_main);
+      // 2.main vertical-scroll
+      this.$container_main = document.createElement('div');
+      this.$container_main.classList.add('gantt-container_main');
+      this.$container.appendChild(this.$container_main);
 
-    // 3. appendTo wrapper
-    const parent_element = this.$svg.parentElement;
-    parent_element.appendChild(this.$container);
-    this.$container_main.appendChild(this.$svg);
+      // 3. svg appendTo wrapper
+      const parent_element = this.$svg.parentElement;
+      parent_element.appendChild(this.$container);
+      this.$container_main.appendChild(this.$svg);
 
-    // 4. toobar wrapper
-    this.$container_toolbar = document.createElement('div');
-    this.$container_toolbar.classList.add('gantt-container_toolbar');
-    this.$container.appendChild(this.$container_toolbar);
+      // 4. toobar wrapper
+      this.$container_toolbar = document.createElement('div');
+      this.$container_toolbar.classList.add('gantt-container_toolbar');
+      this.$container.appendChild(this.$container_toolbar);
 
-    // 4.popup wrapper
-    this.$popup_wrapper = document.createElement("div");
-    this.$popup_wrapper.classList.add("popup-wrapper");
-    this.$container.appendChild(this.$popup_wrapper);
+      // 5.popup wrapper
+      this.$popup_wrapper = document.createElement('div');
+      this.$popup_wrapper.classList.add('gantt-popup-wrapper');
+      this.$container.appendChild(this.$popup_wrapper);
+
+      // 6.backdrop wrapper
+      this.$drag_backdrop = document.createElement('div');
+      this.$drag_backdrop.classList.add('gantt-drag-backdrop');
+      this.$container.appendChild(this.$drag_backdrop);
   }
 
   setup_options(options) {
@@ -373,7 +386,7 @@ export default class Gantt {
     });
     // append row-line
     if ($grid_el.querySelector('.lines_layer')) {
-      if (this.options.lines !== 'vertical') {
+      if (this.options.lines !== TICK_LINE.VERTICAL) {
         createSVG("line", {
           x1: 0,
           y1: insert_y,
@@ -633,8 +646,10 @@ export default class Gantt {
         class: "grid-row",
         append_to: rows_layer,
       });
-      if (this.options.lines === 'both' || this.options.lines === 'horizontal') {
-
+      if (
+          this.options.lines === TICK_LINE.BOTH ||
+          this.options.lines === TICK_LINE.HORIZONTAL
+      ) {
       }
 
       row_y += this.options.bar_height + this.options.padding;
@@ -710,7 +725,7 @@ export default class Gantt {
   }
 
   make_grid_ticks() {
-    if (!['both', 'vertical', 'horizontal'].includes(this.options.lines)) return
+    if (!Object.values(TICK_LINE).includes(this.options.lines)) return;
     let tick_x = 0;
     let tick_y = 0;
     let tick_height = 5000; // assert infinity
@@ -723,7 +738,7 @@ export default class Gantt {
 
     const row_width = this.dates.length * this.options.column_width;
     const row_height = this.options.bar_height + this.options.padding;
-    if (this.options.lines !== 'vertical') {
+    if (this.options.lines !== TICK_LINE.VERTICAL) {
       for (let _ of this.tasks) {
         createSVG("line", {
           x1: 0,
@@ -736,7 +751,7 @@ export default class Gantt {
         row_y += row_height;
       }
     }
-    if (this.options.lines === 'horizontal') return;
+    if (this.options.lines === TICK_LINE.HORIZONTAL) return;
     for (let date of this.dates) {
       let tick_class = "tick";
       if (this.get_thick_mode(date)) {
@@ -1049,6 +1064,7 @@ export default class Gantt {
 
   make_arrows() {
     this.arrows = [];
+    if (!this.options.dependencies) return;
     for (let task of this.tasks) {
       let arrows = [];
       arrows = task.dependencies
@@ -1172,7 +1188,7 @@ export default class Gantt {
     const bar_height = this.options.bar_height;
     const row_height = bar_height + this.options.padding;
 
-    $.on(this.$svg, "mousedown", ".grid-row", (e) => {
+    $.on(this.$svg, "mousedown", (e) => {
       // location
       const index = parseInt(e.offsetY / row_height);
       matched_task = this.tasks[index];
@@ -1347,11 +1363,28 @@ export default class Gantt {
         } else if (is_dragging && !this.options.readonly) {
           bar.update_bar_position({ x: $bar.ox + $bar.finaldx });
         }
+
+        // show drag_backdrop
+        if (parent_bar_id === bar.task.id) {
+          let x = 0;
+          const scrollLeft = this.$container_main.scrollLeft;
+          if (is_resizing_right) {
+            x = $bar.ox - scrollLeft;
+          } else {
+            x = $bar.ox + $bar.finaldx - scrollLeft;
+          }
+          this.show_backdrop({
+              x: x,
+              width: $bar.getWidth(),
+              bar,
+          });
+        }
       });
     });
 
     $.on(this.$svg, "mouseup", () => {
       this.bar_being_dragged = null;
+      this.hide_backdrop();
       bars.forEach((bar) => {
         if (bar.empty) return;
         const $bar = bar.$bar;
@@ -1599,12 +1632,27 @@ export default class Gantt {
     });
   }
 
+  show_backdrop({ x, width, bar }) {
+    if (!this.backdrop) {
+      this.backdrop = new Backdrop(this.$drag_backdrop);
+    }
+
+    const { new_start_date, new_end_date } = bar.compute_start_end_date();
+    const date_start = date_utils.format(new_start_date, 'MM-DD');
+    const date_end = date_utils.format(new_end_date, 'MM-DD');
+    this.backdrop.showAt({ x, width, range: [date_start, date_end] });
+  }
+
+  hide_backdrop() {
+    this.backdrop && this.backdrop.hide();
+  };
+
   show_popup(options) {
     if (this.options.popup === false) return
     if (!this.popup) {
       this.popup = new Popup(
+        this,
         this.$popup_wrapper,
-        this.options,
       );
     }
     this.popup.show(options);

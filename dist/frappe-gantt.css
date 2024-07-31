@@ -53,18 +53,23 @@
   fill: #f7f7f7;
 }
 
-.dark > .gantt-container .popup-wrapper {
+.dark > .gantt-container .gantt-popup-wrapper {
   background-color: #333;
 }
-.dark > .gantt-container .popup-wrapper .title {
+.dark > .gantt-container .gantt-popup-wrapper .title {
   border-color: #a4a4ff;
 }
-.dark > .gantt-container .popup-wrapper .pointer {
+.dark > .gantt-container .gantt-popup-wrapper .pointer {
   border-top-color: #333;
 }
 
 .gantt-container {
+  position: relative;
+  height: 100%;
+  overflow: auto;
+  font-size: 12px;
   line-height: 1px;
+  background: #fff;
 }
 .gantt-container_header {
   position: relative;
@@ -260,18 +265,8 @@
 .gantt .bar-wrapper:hover .date-highlight {
   display: block;
 }
-.gantt .hide {
-  display: none;
-}
 
-.gantt-container {
-  position: relative;
-  height: 100%;
-  overflow: auto;
-  font-size: 12px;
-  background: #fff;
-}
-.gantt-container .popup-wrapper {
+.gantt-popup-wrapper {
   position: absolute;
   top: 0;
   left: 0;
@@ -282,19 +277,52 @@
   width: max-content;
   opacity: 0;
 }
-.gantt-container .popup-wrapper .title {
+.gantt-popup-wrapper .title {
   margin-bottom: 5px;
   text-align: -webkit-center;
   text-align: center;
   color: #fff;
 }
-.gantt-container .popup-wrapper .subtitle {
+.gantt-popup-wrapper .subtitle {
   color: #98A1A9;
 }
-.gantt-container .popup-wrapper .pointer {
+.gantt-popup-wrapper .pointer {
+  display: none;
   position: absolute;
   height: 5px;
   margin: 0 0 0 -5px;
   border: 5px solid transparent;
   border-bottom-color: rgba(0, 0, 0, 0.8);
+}
+
+.gantt-drag-backdrop {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  overflow: hidden;
+  pointer-events: none;
+  user-select: none;
+  display: none;
+}
+.gantt-drag-backdrop .gantt-drag-mask {
+  position: absolute;
+  top: 23px;
+  z-index: 1;
+  height: 100%;
+  display: none;
+  background: rgba(102, 152, 255, 0.0509803922);
+}
+.gantt-drag-backdrop .date-range {
+  width: 100%;
+  min-width: 120px;
+  position: absolute;
+  top: 0;
+  background: #6698ff;
+  line-height: 23px;
+  border-radius: 4px;
+  color: #fff;
+  display: flex;
+  justify-content: space-between;
+  padding: 0 10px;
+  box-sizing: border-box;
 }

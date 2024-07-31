@@ -1,17 +1,17 @@
 export default class Popup {
-  constructor(parent, options) {
+  constructor(gantt, parent) {
+    this.gantt = gantt;
     this.parent = parent;
-    this.options = options;
-    this.custom_html = options.popup;
+    this.custom_html = gantt.options.popup;
     this.make();
   }
 
   make() {
     this.parent.innerHTML = `
-            <div class="title"></div>
-            <div class="subtitle"></div>
-            <div class="pointer"></div>
-        `;
+        <div class="title"></div>
+        <div class="subtitle"></div>
+        <div class="pointer"></div>
+    `;
 
     this.hide();
 
@@ -44,11 +44,30 @@ export default class Popup {
     } else if (target_element instanceof SVGElement) {
       position_meta = target_element.getBBox();
     }
+    const parentWidth = this.parent.clientWidth;
+    const parentHeight = this.parent.clientHeight;
+    const ganttOptions = this.gantt.options;
+    const ganttWidth = this.gantt.$container.clientWidth;
+    const ganttHeight = this.gantt.$container.clientHeight;
 
-    this.parent.style.left = options.x - this.parent.clientWidth / 2 + "px";
-    this.parent.style.top = position_meta.y + position_meta.height + this.options.header_height + 10 + "px";
+    // get position
+    let pos_x = options.x - parentWidth / 2;
+    let pos_y = position_meta.y + position_meta.height + ganttOptions.header_height + 10;
 
-    this.pointer.style.left = this.parent.clientWidth / 2 + "px";
+    if (pos_y > ganttHeight - parentHeight) {
+      pos_y = position_meta.y - parentHeight - 10 + ganttOptions.header_height;
+    }
+
+    if (pos_x > ganttWidth - parentWidth) {
+      console.log("ddd ==> out x");
+      const diff = pos_x - (ganttWidth - parentWidth - 5);
+      pos_x -= diff;
+    }
+
+    this.parent.style.left = pos_x + "px";
+    this.parent.style.top = pos_y + "px";
+
+    this.pointer.style.left = parentWidth / 2 + 'px';
     this.pointer.style.top = "-15px";
 
     // show
