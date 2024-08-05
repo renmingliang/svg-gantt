@@ -273,34 +273,37 @@ export default class Gantt {
     this.change_view_mode();
   }
 
-  // TODO 支持多条
+  // TODO 无绘制点时
   update(task) {
     const original = this.get_task(task.id);
     const bar = this.get_bar(task.id);
     if (task.start) {
       // left
-      const start_date = new Date(task.start);
-      const diff = Math.abs(original._start - start_date);
+      const start_date = date_utils.parse(task.start);
       const dx =
-          (date_utils.diff(diff, this.gantt_start, 'hour') /
+          (date_utils.diff(original._start, start_date, 'hour') /
               this.options.step) *
           this.options.column_width;
+      console.log('ddd ==> left dx', original._start, start_date, dx);
+
       bar.update_bar_position({
           x: bar.$bar.getX() - dx,
           width: bar.$bar.getWidth() + dx,
       });
+      original._start = start_date;
     }
     if (task.end) {
       // right
-      const end_date = new Date(task.end);
-      const diff = Math.abs(original._end - end_date);
+      const end_date = date_utils.parse(task.end);
       const dx =
-          (date_utils.diff(diff, this.gantt_start, 'hour') /
+          (date_utils.diff(original._end, end_date, 'hour') /
               this.options.step) *
           this.options.column_width;
+      console.log('ddd ==> right dx', original._end, end_date, dx);
       bar.update_bar_position({
-        width: bar.$bar.getWidth() + dx,
+        width: bar.$bar.getWidth() - dx,
       });
+      original._end = end_date;
     }
   }
 
@@ -342,13 +345,13 @@ export default class Gantt {
     this.map_arrows_on_bars();
 
     // update grid_height
-    // const grid_height = this.tasks.length * row_height;
-    // this.$svg.setAttribute("height", grid_height);
-    // this.$svg.querySelector(".grid-background").setAttribute("height", grid_height);
+    const grid_height = this.tasks.length * row_height;
+    this.$svg.setAttribute("height", grid_height);
+    this.$svg.querySelector(".grid-background").setAttribute("height", grid_height);
 
-    // if (this.$today_overlay) {
-    //   this.$today_overlay.querySelector('.today-highlight').style.height = grid_height + 'px';
-    // }
+    if (this.$today_overlay) {
+      this.$today_overlay.style.height = grid_height + 'px';
+    }
   }
 
   // TODO 支持多条
@@ -435,13 +438,13 @@ export default class Gantt {
     this.map_arrows_on_bars();
 
     // update grid_height
-    // const grid_height = this.tasks.length * row_height;
-    // this.$svg.setAttribute("height", grid_height);
-    // this.$svg.querySelector(".grid-background").setAttribute("height", grid_height);
+    const grid_height = this.tasks.length * row_height;
+    this.$svg.setAttribute("height", grid_height);
+    this.$svg.querySelector(".grid-background").setAttribute("height", grid_height);
 
-    // if (this.$today_overlay) {
-    //   this.$today_overlay.querySelector('.today-highlight').style.height = grid_height + 'px';
-    // }
+    if (this.$today_overlay) {
+      this.$today_overlay.style.height = grid_height + 'px';
+    }
   }
 
   refresh_view_date() {
@@ -636,13 +639,13 @@ export default class Gantt {
 
   make_grid_background() {
     const grid_width = this.dates.length * this.options.column_width;
-    // const grid_height = (this.options.bar_height + this.options.padding) * this.tasks.length;
+    const grid_height = (this.options.bar_height + this.options.padding) * this.tasks.length;
 
     createSVG("rect", {
       x: 0,
       y: 0,
       width: grid_width,
-      height: "100%",
+      height: grid_height,
       class: "grid-background",
       append_to: this.$svg,
     });
@@ -655,7 +658,7 @@ export default class Gantt {
     this.$container.style.overflow = 'hidden';
 
     $.attr(this.$svg, {
-      height: "100%" ,
+      height: grid_height ,
       width: "100%",
     });
   }
@@ -910,11 +913,11 @@ export default class Gantt {
 
       const { x: left, date } = this.computeGridHighlightDimensions(this.options.view_mode)
       console.log('ddd ==> x-left', left, date);
-      // const height = (this.options.bar_height + this.options.padding) * this.tasks.length;
+      const height = (this.options.bar_height + this.options.padding) * this.tasks.length;
       this.$today_overlay = this.create_el({
           top: 0,
           left,
-          height: "100%",
+          height: height,
           classes: 'today-highlight',
           append_to: this.$container_main,
       });

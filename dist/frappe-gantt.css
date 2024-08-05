@@ -170,8 +170,8 @@
 
 .gantt {
   user-select: none;
-  -webkit-user-select: none;
   position: relative;
+  min-height: 100%;
 }
 .gantt .grid-background {
   fill: none;

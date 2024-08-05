@@ -144,8 +144,8 @@ $handle-color: #dcdce4 !default;
 
 .gantt {
   user-select: none;
-  -webkit-user-select: none;
   position: relative;
+  min-height: 100%;
 
   .grid-background {
     fill: none;
