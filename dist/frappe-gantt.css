@@ -159,6 +159,7 @@
   position: absolute;
   background: #2c94ec;
   width: 1px;
+  bottom: 0;
 }
 .gantt-container .today-date-highlight {
   background: #2c94ec;

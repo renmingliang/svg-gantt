@@ -33,8 +33,7 @@
 
       <button onclick="insertData()">插入一条数据</button>
       <button onclick="deleteData()">删除一条数据</button>
-
-      <button onclick="showdrop()">拖拽背景</button>
+      <button onclick="updateData()">更新一条数据</button>
     </div>
     <script src="./const.js"></script>
     <script>
@@ -55,9 +54,8 @@
       function deleteData() {
         gantt_chart.remove(1);
       }
-
-      function showdrop() {
-        gantt_chart.show_backdrop({ x: 0, width: 100, range: ['07-16', '07-30']})
+      function updateData() {
+        gantt_chart.update({id: 'Task_5', start: '2024-07-18'});
       }
 
       function init(list) {
@@ -93,7 +91,7 @@
           drag_bar_progress: false, // 进度条可拖拽
           // drag_sync_child: true, // 子级同步拖拽
           // height: 200,
-          // scroll_to: 'today', // 1/3位置
+          scroll_to: 'today',
           // today_button: false,
           // readonly: true,
           // lower_text: (date) => date.getDay(),

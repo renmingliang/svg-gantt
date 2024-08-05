@@ -43,7 +43,7 @@ var tasks = [
     },
     {
         start: '2024-07-21',
-        end: '2024-07-29',
+        end: '2025-08-19',
         name: 'Go Live!',
         id: 'Task 5',
         progress: 0,

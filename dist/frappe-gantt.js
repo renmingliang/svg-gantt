@@ -1606,6 +1606,37 @@ var Gantt = (function () {
     }
 
     // TODO 支持多条
+    update(task) {
+      const original = this.get_task(task.id);
+      const bar = this.get_bar(task.id);
+      if (task.start) {
+        // left
+        const start_date = new Date(task.start);
+        const diff = Math.abs(original._start - start_date);
+        const dx =
+            (date_utils.diff(diff, this.gantt_start, 'hour') /
+                this.options.step) *
+            this.options.column_width;
+        bar.update_bar_position({
+            x: bar.$bar.getX() - dx,
+            width: bar.$bar.getWidth() + dx,
+        });
+      }
+      if (task.end) {
+        // right
+        const end_date = new Date(task.end);
+        const diff = Math.abs(original._end - end_date);
+        const dx =
+            (date_utils.diff(diff, this.gantt_start, 'hour') /
+                this.options.step) *
+            this.options.column_width;
+        bar.update_bar_position({
+          width: bar.$bar.getWidth() + dx,
+        });
+      }
+    }
+
+    // TODO 支持多条
     remove(task) {
       let index = null;
       if (typeof task === 'object') {
@@ -1643,13 +1674,13 @@ var Gantt = (function () {
       this.map_arrows_on_bars();
 
       // update grid_height
-      const grid_height = this.tasks.length * row_height;
-      this.$svg.setAttribute("height", grid_height);
-      this.$svg.querySelector(".grid-background").setAttribute("height", grid_height);
+      // const grid_height = this.tasks.length * row_height;
+      // this.$svg.setAttribute("height", grid_height);
+      // this.$svg.querySelector(".grid-background").setAttribute("height", grid_height);
 
-      if (this.$today_overlay) {
-        this.$today_overlay.querySelector('.today-highlight').style.height = grid_height + 'px';
-      }
+      // if (this.$today_overlay) {
+      //   this.$today_overlay.querySelector('.today-highlight').style.height = grid_height + 'px';
+      // }
     }
 
     // TODO 支持多条
@@ -1736,13 +1767,13 @@ var Gantt = (function () {
       this.map_arrows_on_bars();
 
       // update grid_height
-      const grid_height = this.tasks.length * row_height;
-      this.$svg.setAttribute("height", grid_height);
-      this.$svg.querySelector(".grid-background").setAttribute("height", grid_height);
+      // const grid_height = this.tasks.length * row_height;
+      // this.$svg.setAttribute("height", grid_height);
+      // this.$svg.querySelector(".grid-background").setAttribute("height", grid_height);
 
-      if (this.$today_overlay) {
-        this.$today_overlay.querySelector('.today-highlight').style.height = grid_height + 'px';
-      }
+      // if (this.$today_overlay) {
+      //   this.$today_overlay.querySelector('.today-highlight').style.height = grid_height + 'px';
+      // }
     }
 
     refresh_view_date() {
@@ -1937,13 +1968,13 @@ var Gantt = (function () {
 
     make_grid_background() {
       const grid_width = this.dates.length * this.options.column_width;
-      const grid_height = (this.options.bar_height + this.options.padding) * this.tasks.length;
+      // const grid_height = (this.options.bar_height + this.options.padding) * this.tasks.length;
 
       createSVG("rect", {
         x: 0,
         y: 0,
         width: grid_width,
-        height: grid_height,
+        height: "100%",
         class: "grid-background",
         append_to: this.$svg,
       });
@@ -1956,7 +1987,7 @@ var Gantt = (function () {
       this.$container.style.overflow = 'hidden';
 
       $.attr(this.$svg, {
-        height: grid_height ,
+        height: "100%" ,
         width: "100%",
       });
     }
@@ -2205,14 +2236,19 @@ var Gantt = (function () {
         this.view_is(VIEW_MODE.YEAR)
       ) {
         // Used as we must find the _end_ of session if view is not Day
-        const grid_width = this.dates.length * this.options.column_width;
-        this.$today_overlay = this.create_el({ width: grid_width, classes: 'gantt-today-overlay', append_to: this.$container_main });
+        // const grid_width = this.dates.length * this.options.column_width;
+        // this.$today_overlay = this.create_el({ width: grid_width, classes: 'gantt-today-overlay', append_to: this.$container_main })
 
         const { x: left, date } = this.computeGridHighlightDimensions(this.options.view_mode);
-        const top = 0;
         console.log('ddd ==> x-left', left, date);
-        const height = (this.options.bar_height + this.options.padding) * this.tasks.length;
-        this.create_el({ top, left, height, classes: 'today-highlight', append_to: this.$today_overlay });
+        // const height = (this.options.bar_height + this.options.padding) * this.tasks.length;
+        this.$today_overlay = this.create_el({
+            top: 0,
+            left,
+            height: "100%",
+            classes: 'today-highlight',
+            append_to: this.$container_main,
+        });
 
         let $today = document.getElementById(date_utils.format(date).replaceAll(' ', '_'));
         $today.classList.add('today-date-highlight');
@@ -2453,12 +2489,17 @@ var Gantt = (function () {
         this.gantt_start,
         "hour",
       ) + 24;
+      // 1/3 padding
+      const space = (parent_element.clientWidth / 3 / this.options.column_width) * this.options.step;
+      const distance = hours_before_first_task - space;
+      // position
+      console.log('ddd ==> space', hours_before_first_task, space, distance);
 
       const scroll_pos =
-        (hours_before_first_task / this.options.step) *
-        this.options.column_width -
-        this.options.column_width;
-      parent_element.scrollTo({ left: scroll_pos, behavior: 'smooth' });
+          (distance / this.options.step) * this.options.column_width -
+          this.options.column_width;
+      // smooth、auto
+      parent_element.scrollTo({ left: scroll_pos, behavior: 'auto' });
     }
 
     scroll_today() {
