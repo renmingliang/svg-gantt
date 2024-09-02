@@ -1227,6 +1227,7 @@ export default class Gantt {
     let matched_task = null;
     let is_creating = null;
     let holder = null;
+    this.bar_being_created = null;
 
     const radius = this.options.bar_corner_radius;
     const bar_height = this.options.bar_height;
@@ -1238,6 +1239,7 @@ export default class Gantt {
       matched_task = this.tasks[index];
       // only empty date
       if (matched_task && matched_task.empty !== true) return;
+      this.bar_being_created = matched_task.id;
       // start record
       is_creating = true;
       x_on_start = e.offsetX;
@@ -1278,7 +1280,7 @@ export default class Gantt {
     });
 
     $.on(this.$svg, "mouseup", () => {
-      is_creating = false;
+      this.bar_being_created = null;
       if (holder) {
         const start_x = holder.getX();
         const end_x = holder.getX() + holder.getBBox().width;
@@ -1311,6 +1313,10 @@ export default class Gantt {
         this.trigger_event('date_change', [matched_task, date_start, date_end]);
       }
       holder = null;
+    });
+
+    document.addEventListener("mouseup", () => {
+      is_creating = false;
     });
   }
 

@@ -309,23 +309,36 @@ export default class Bar {
     $.on(this.group, "mouseenter", (e) => timeout = setTimeout(() => {
       const scrollLeft = this.gantt.$container_main.scrollLeft;
       this.show_popup(e.offsetX - scrollLeft);
-    }, 200))
+    }, 600))
 
     $.on(this.group, "mouseleave", () => {
       clearTimeout(timeout)
       this.gantt.hide_popup();
     })
 
+    let clickTimeout;
+    let clickCount = 0;
     $.on(this.group, 'click', () => {
-      this.gantt.trigger_event("click", [this.task]);
-    });
-
-    $.on(this.group, "dblclick", (e) => {
       if (this.action_completed) {
         // just finished a move action, wait for a few seconds
         return;
       }
 
+      clickCount += 1;
+      if (clickCount === 1) {
+        clickTimeout = setTimeout(() => {
+            this.gantt.trigger_event('click', [this.task]);
+            clickCount = 0;
+        }, 250);
+      } else {
+        clearTimeout(clickTimeout);
+        clickCount = 0;
+      }
+    });
+
+    $.on(this.group, "dblclick", () => {
+      clearTimeout(clickTimeout);
+      clickCount = 0;
       this.gantt.trigger_event("double_click", [this.task]);
     });
   }
@@ -462,7 +475,7 @@ export default class Bar {
 
   set_action_completed() {
     this.action_completed = true;
-    setTimeout(() => (this.action_completed = false), 1000);
+    setTimeout(() => (this.action_completed = false), 800);
   }
 
   compute_start_end_date() {

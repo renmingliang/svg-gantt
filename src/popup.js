@@ -50,16 +50,22 @@ export default class Popup {
     const ganttWidth = this.gantt.$container.clientWidth;
     const ganttHeight = this.gantt.$container.clientHeight;
 
+    const dy = this.gantt.$container_main.scrollTop;
+
     // get position
     let pos_x = options.x - parentWidth / 2;
-    let pos_y = position_meta.y + position_meta.height + ganttOptions.header_height + 10;
+    let pos_y =
+        position_meta.y +
+        position_meta.height +
+        ganttOptions.header_height -
+        dy +
+        10;
 
     if (pos_y > ganttHeight - parentHeight) {
-      pos_y = position_meta.y - parentHeight - 10 + ganttOptions.header_height;
+      pos_y = position_meta.y - parentHeight - 10 - dy + ganttOptions.header_height;
     }
 
     if (pos_x > ganttWidth - parentWidth) {
-      console.log("ddd ==> out x");
       const diff = pos_x - (ganttWidth - parentWidth - 5);
       pos_x -= diff;
     }

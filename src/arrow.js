@@ -17,7 +17,8 @@ export default class Arrow {
     const rowHeight = this.gantt.options.bar_height + this.gantt.options.padding;
     const taskHeight = this.gantt.options.bar_height;
     const arrowCurve = this.gantt.options.arrow_curve;
-    const arrowIndent = this.gantt.options.column_width / 2;
+    // const arrowIndent = this.gantt.options.column_width / 2;
+    const arrowIndent = 19; // fixed indent
     const taskFrom = this.from_task;
     const taskTo = this.to_task;
 

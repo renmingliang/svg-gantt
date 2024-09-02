@@ -789,23 +789,36 @@ var Gantt = (function () {
       $.on(this.group, "mouseenter", (e) => timeout = setTimeout(() => {
         const scrollLeft = this.gantt.$container_main.scrollLeft;
         this.show_popup(e.offsetX - scrollLeft);
-      }, 200));
+      }, 600));
 
       $.on(this.group, "mouseleave", () => {
         clearTimeout(timeout);
         this.gantt.hide_popup();
       });
 
+      let clickTimeout;
+      let clickCount = 0;
       $.on(this.group, 'click', () => {
-        this.gantt.trigger_event("click", [this.task]);
-      });
-
-      $.on(this.group, "dblclick", (e) => {
         if (this.action_completed) {
           // just finished a move action, wait for a few seconds
           return;
         }
 
+        clickCount += 1;
+        if (clickCount === 1) {
+          clickTimeout = setTimeout(() => {
+              this.gantt.trigger_event('click', [this.task]);
+              clickCount = 0;
+          }, 250);
+        } else {
+          clearTimeout(clickTimeout);
+          clickCount = 0;
+        }
+      });
+
+      $.on(this.group, "dblclick", () => {
+        clearTimeout(clickTimeout);
+        clickCount = 0;
         this.gantt.trigger_event("double_click", [this.task]);
       });
     }
@@ -942,7 +955,7 @@ var Gantt = (function () {
 
     set_action_completed() {
       this.action_completed = true;
-      setTimeout(() => (this.action_completed = false), 1000);
+      setTimeout(() => (this.action_completed = false), 800);
     }
 
     compute_start_end_date() {
@@ -1149,7 +1162,8 @@ var Gantt = (function () {
       const rowHeight = this.gantt.options.bar_height + this.gantt.options.padding;
       const taskHeight = this.gantt.options.bar_height;
       const arrowCurve = this.gantt.options.arrow_curve;
-      const arrowIndent = this.gantt.options.column_width / 2;
+      // const arrowIndent = this.gantt.options.column_width / 2;
+      const arrowIndent = 19; // fixed indent
       const taskFrom = this.from_task;
       const taskTo = this.to_task;
 
@@ -1267,16 +1281,22 @@ var Gantt = (function () {
       const ganttWidth = this.gantt.$container.clientWidth;
       const ganttHeight = this.gantt.$container.clientHeight;
 
+      const dy = this.gantt.$container_main.scrollTop;
+
       // get position
       let pos_x = options.x - parentWidth / 2;
-      let pos_y = position_meta.y + position_meta.height + ganttOptions.header_height + 10;
+      let pos_y =
+          position_meta.y +
+          position_meta.height +
+          ganttOptions.header_height -
+          dy +
+          10;
 
       if (pos_y > ganttHeight - parentHeight) {
-        pos_y = position_meta.y - parentHeight - 10 + ganttOptions.header_height;
+        pos_y = position_meta.y - parentHeight - 10 - dy + ganttOptions.header_height;
       }
 
       if (pos_x > ganttWidth - parentWidth) {
-        console.log("ddd ==> out x");
         const diff = pos_x - (ganttWidth - parentWidth - 5);
         pos_x -= diff;
       }
@@ -2558,6 +2578,7 @@ var Gantt = (function () {
       let matched_task = null;
       let is_creating = null;
       let holder = null;
+      this.bar_being_created = null;
 
       const radius = this.options.bar_corner_radius;
       const bar_height = this.options.bar_height;
@@ -2569,6 +2590,7 @@ var Gantt = (function () {
         matched_task = this.tasks[index];
         // only empty date
         if (matched_task && matched_task.empty !== true) return;
+        this.bar_being_created = matched_task.id;
         // start record
         is_creating = true;
         x_on_start = e.offsetX;
@@ -2609,7 +2631,7 @@ var Gantt = (function () {
       });
 
       $.on(this.$svg, "mouseup", () => {
-        is_creating = false;
+        this.bar_being_created = null;
         if (holder) {
           const start_x = holder.getX();
           const end_x = holder.getX() + holder.getBBox().width;
@@ -2642,6 +2664,10 @@ var Gantt = (function () {
           this.trigger_event('date_change', [matched_task, date_start, date_end]);
         }
         holder = null;
+      });
+
+      document.addEventListener("mouseup", () => {
+        is_creating = false;
       });
     }
 

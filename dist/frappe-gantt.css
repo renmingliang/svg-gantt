@@ -273,15 +273,14 @@
   left: 0;
   background: #171B1F;
   padding: 10px;
-  border-radius: 5px;
+  border-radius: 4px;
   line-height: 1.2;
   width: max-content;
   opacity: 0;
 }
 .gantt-popup-wrapper .title {
   margin-bottom: 5px;
-  text-align: -webkit-center;
-  text-align: center;
+  text-align: left;
   color: #fff;
 }
 .gantt-popup-wrapper .subtitle {
