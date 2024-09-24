@@ -1,14 +1,14 @@
 @import "./dark.scss";
 
-$bar-color: #b8c2cc !default;
+$bar-color: rgba(86, 171, 251, 0.65) !default;
 $bar-color-important: #94c4f4 !default;
-$bar-stroke: #b8c2cc !default;
+$bar-stroke: rgba(86, 171, 251) !default;
 $tick-color-thick: #e0e0e0 !default;
 $tick-color: #ebeef0 !default;
 $light-bg: #f5f5f5 !default;
 $light-border-color: #f5f5f5 !default;
 $holiday-color: #F9FAFA !default;
-$text-muted: #666 !default;
+$text-muted: #978989 !default;
 $popup-text-grey: #98A1A9;
 $text-light: #fff !default;
 $text-color: #555 !default;
@@ -76,6 +76,8 @@ $handle-color: #dcdce4 !default;
     white-space: nowrap;
     font-weight: 500;
     font-size: 16px;
+    background: #ffffff;
+    padding: 1px 2px;
   }
 
   .tick-line {
@@ -90,6 +92,7 @@ $handle-color: #dcdce4 !default;
 
   .today-button,
   .viewmode-select {
+    cursor: pointer;
     background: #F4F5F6;
     text-align: -webkit-center;
     text-align: center;
@@ -187,7 +190,7 @@ $handle-color: #dcdce4 !default;
   .bar-inner {
     fill: $bar-color;
     stroke: $bar-stroke;
-    stroke-width: 0;
+    stroke-width: 1;
     transition: stroke-width 0.3s ease;
   }
 
@@ -293,7 +296,7 @@ $handle-color: #dcdce4 !default;
   border-radius: 4px;
   line-height: 1.2;
   width: max-content;
-  opacity: 0;
+  display: none;
 
   .title {
     margin-bottom: 5px;

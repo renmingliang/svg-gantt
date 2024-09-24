@@ -23,7 +23,7 @@ const SHORTENED = {
 
 export default {
   parse_duration(duration) {
-    const regex = /([0-9])+(y|m|d|h|min|s|ms)/gm;
+    const regex = /([0-9]{1,})+(y|m|d|h|min|s|ms)/gm;
     const matches = regex.exec(duration);
 
     if (matches !== null) {

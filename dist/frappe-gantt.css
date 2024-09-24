@@ -114,6 +114,8 @@
   white-space: nowrap;
   font-weight: 500;
   font-size: 16px;
+  background: #ffffff;
+  padding: 1px 2px;
 }
 .gantt-container .tick-line {
   background: #e0e0e0;
@@ -124,6 +126,7 @@
 }
 .gantt-container .today-button,
 .gantt-container .viewmode-select {
+  cursor: pointer;
   background: #F4F5F6;
   text-align: -webkit-center;
   text-align: center;
@@ -200,9 +203,9 @@
   stroke-width: 1;
 }
 .gantt .bar-inner {
-  fill: #b8c2cc;
-  stroke: #b8c2cc;
-  stroke-width: 0;
+  fill: rgba(86, 171, 251, 0.65);
+  stroke: rgb(86, 171, 251);
+  stroke-width: 1;
   transition: stroke-width 0.3s ease;
 }
 .gantt .bar-progress {
@@ -213,12 +216,12 @@
 }
 .gantt .bar-wrapper .bar-invalid {
   fill: transparent;
-  stroke: #b8c2cc;
+  stroke: rgb(86, 171, 251);
   stroke-width: 1;
   stroke-dasharray: 5;
 }
 .gantt .bar-wrapper .bar-invalid ~ .bar-label {
-  fill: #b8c2cc;
+  fill: rgb(86, 171, 251);
 }
 .gantt .bar-label {
   fill: #fff;
@@ -245,7 +248,7 @@
   transition: opacity 0.3s ease;
 }
 .gantt .handle.progress {
-  fill: #666;
+  fill: #978989;
 }
 .gantt .bar-wrapper {
   cursor: pointer;
@@ -276,7 +279,7 @@
   border-radius: 4px;
   line-height: 1.2;
   width: max-content;
-  opacity: 0;
+  display: none;
 }
 .gantt-popup-wrapper .title {
   margin-bottom: 5px;

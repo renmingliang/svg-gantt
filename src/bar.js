@@ -16,8 +16,24 @@ export default class Bar {
   }
 
   prepare() {
+    this.prepare_doms();
     this.prepare_values();
     this.prepare_helpers();
+  }
+
+  prepare_doms() {
+    this.group = createSVG("g", {
+      class: "bar-wrapper" + (this.task.custom_class ? " " + this.task.custom_class : "") + (this.task.important ? ' important' : ''),
+      "data-id": this.task.id,
+    });
+    this.bar_group = createSVG("g", {
+      class: "bar-group",
+      append_to: this.group,
+    });
+    this.handle_group = createSVG("g", {
+      class: "handle-group",
+      append_to: this.group,
+    });
   }
 
   prepare_values() {
@@ -34,18 +50,6 @@ export default class Bar {
       this.gantt.options.column_width *
       this.duration *
       (this.task.progress / 100) || 0;
-    this.group = createSVG("g", {
-      class: "bar-wrapper" + (this.task.custom_class ? " " + this.task.custom_class : "") + (this.task.important ? ' important' : ''),
-      "data-id": this.task.id,
-    });
-    this.bar_group = createSVG("g", {
-      class: "bar-group",
-      append_to: this.group,
-    });
-    this.handle_group = createSVG("g", {
-      class: "handle-group",
-      append_to: this.group,
-    });
   }
 
   prepare_helpers() {
@@ -234,7 +238,7 @@ export default class Bar {
   }
 
   draw_resize_handles() {
-    if (this.invalid || this.gantt.options.readonly) return;
+    if (this.gantt.options.readonly) return;
 
     const bar = this.$bar;
     const handle_width = this.gantt.options.handle_width;
@@ -274,6 +278,7 @@ export default class Bar {
 
   get_progress_polygon_points() {
     const bar_progress = this.$bar_progress;
+    if (!bar_progress) return [];
     let icon_width = 10;
     let icon_height = 15;
 
@@ -296,7 +301,6 @@ export default class Bar {
   }
 
   bind() {
-    if (this.invalid) return;
     this.setup_click_event();
   }
 
@@ -367,6 +371,15 @@ export default class Bar {
     });
   }
 
+  update_bar_task(task) {
+    this.action_completed = false;
+    this.task = task;
+    this.prepare_values();
+
+    const label = this.bar_group.querySelector('.bar-label')
+    if(label) label.innerHTML = task.name;
+  }
+
   update_bar_position({ x = null, width = null }) {
     const bar = this.$bar;
     if (x) {
@@ -431,7 +444,6 @@ export default class Bar {
         img.setAttribute('x', newImgX);
         img_mask.setAttribute('x', newImgX);
       }
-
     }
   }
 
@@ -450,6 +462,12 @@ export default class Bar {
     }
 
     if (!changed) return;
+
+    if (this.invalid) {
+      this.invalid = false;
+      this.task.invalid = false;
+      this.$bar.classList.remove('bar-invalid');
+    }
 
     // TODO out of limit to redraw
     // if (
@@ -590,7 +608,8 @@ export default class Bar {
   }
 
   update_expected_progressbar_position() {
-    if (this.invalid) return;
+    if (!this.$expected_bar_progress) return;
+
     this.$expected_bar_progress.setAttribute("x", this.$bar.getX());
     this.compute_expected_progress();
     this.$expected_bar_progress.setAttribute(
@@ -602,7 +621,9 @@ export default class Bar {
   }
 
   update_progressbar_position() {
-    if (this.invalid || this.gantt.options.readonly) return;
+    if (this.gantt.options.readonly) return;
+    if (!this.$bar_progress) return;
+
     this.$bar_progress.setAttribute("x", this.$bar.getX());
     this.$bar_progress.setAttribute(
       "width",
@@ -643,7 +664,7 @@ export default class Bar {
   }
 
   update_handle_position() {
-    if (this.invalid || this.gantt.options.readonly) return;
+    if (this.gantt.options.readonly) return;
     const bar = this.$bar;
     const handle_width = this.gantt.options.handle_width;
 

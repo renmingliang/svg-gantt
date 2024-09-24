@@ -70,6 +70,10 @@ export default class Popup {
       pos_x -= diff;
     }
 
+    if (pos_x < 0) {
+      pos_x = 2
+    }
+
     this.parent.style.left = pos_x + "px";
     this.parent.style.top = pos_y + "px";
 
@@ -77,11 +81,11 @@ export default class Popup {
     this.pointer.style.top = "-15px";
 
     // show
-    this.parent.style.opacity = 1;
+    this.parent.style.display = "block";
   }
 
   hide() {
-    this.parent.style.opacity = 0;
+    this.parent.style.display = "none";
     this.parent.style.left = 0;
   }
 }
