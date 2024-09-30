@@ -226,11 +226,11 @@ export default class Gantt {
     }
 
     // mock daterange
-    if (!task.start && task.end) {
-      task._start = date_utils.add(task._end, -2, "day");
-    }
     if (task.start && !task.end) {
       task._end = date_utils.add(task._start, 2, "day");
+    }
+    if (!task.start && task.end) {
+      task._start = date_utils.add(task._end, -2, "day");
     }
 
     // if hours is not set, assume the last day is full day
@@ -367,10 +367,6 @@ export default class Gantt {
     const grid_height = this.tasks.length * row_height;
     this.$svg.setAttribute("height", grid_height);
     this.$svg.querySelector(".grid-background").setAttribute("height", grid_height);
-
-    if (this.$today_overlay) {
-      this.$today_overlay.style.height = grid_height + 'px';
-    }
   }
 
   // TODO 支持多条
@@ -458,10 +454,6 @@ export default class Gantt {
     const grid_height = this.tasks.length * row_height;
     this.$svg.setAttribute("height", grid_height);
     this.$svg.querySelector(".grid-background").setAttribute("height", grid_height);
-
-    if (this.$today_overlay) {
-      this.$today_overlay.style.height = grid_height + 'px';
-    }
   }
 
   update_render(prev_task, update_task) {
@@ -651,7 +643,7 @@ export default class Gantt {
 
   setup_layers() {
     this.layers = {};
-    const layers = ["grid", "arrow", "progress", "bar", "details"];
+    const layers = ["grid", "today", "arrow", "progress", "bar"];
     // make group layers
     for (let layer of layers) {
       this.layers[layer] = createSVG("g", {
@@ -803,9 +795,9 @@ export default class Gantt {
     if (!Object.values(TICK_LINE).includes(this.options.lines)) return;
     let tick_x = 0;
     let tick_y = 0;
-    let tick_height = 5000; // assert infinity
-    // let tick_height =
-    //   (this.options.bar_height + this.options.padding) * this.tasks.length;
+    const data_height =
+        (this.options.bar_height + this.options.padding) * this.tasks.length;
+    const tick_height = Math.max(5000, data_height);
 
     let $lines_layer = createSVG("g", { class: 'lines_layer', append_to: this.layers.grid });
 
@@ -884,7 +876,6 @@ export default class Gantt {
         const x = (date_utils.diff(d, this.gantt_start, 'hour') /
           this.options.step) *
           this.options.column_width;
-        // const height = (this.options.bar_height + this.options.padding) * this.tasks.length;
         createSVG('rect', {
           x,
           y: 0,
@@ -899,42 +890,14 @@ export default class Gantt {
 
   //compute the horizontal x distance
   computeGridHighlightDimensions(view_mode) {
-    let x = this.options.column_width / 2;
+    const today = date_utils.today();
+    let x = view_mode === VIEW_MODE.DAY ? this.options.column_width / 2 : 0;
 
-    if (this.view_is(VIEW_MODE.DAY)) {
-      let today = date_utils.today()
-      return {
-        x: x +
-          (date_utils.diff(today, this.gantt_start, "hour") / this.options.step) *
-          this.options.column_width,
-        date: today
-      }
-    }
-
-    // 今日-计算区间中心位置 -TODO 需改成同上面日期计算位置
-    for (let date of this.dates) {
-      const todayDate = new Date();
-      const startDate = new Date(date);
-      const endDate = new Date(date);
-      switch (view_mode) {
-        case VIEW_MODE.WEEK:
-          endDate.setDate(date.getDate() + 7);
-          break;
-        case VIEW_MODE.MONTH:
-          endDate.setMonth(date.getMonth() + 1);
-          break;
-        case VIEW_MODE.QUARTER_YEAR:
-          endDate.setMonth(date.getMonth() + 3);
-          break;
-        case VIEW_MODE.YEAR:
-          endDate.setFullYear(date.getFullYear() + 1);
-          break;
-      }
-      if (todayDate >= startDate && todayDate <= endDate) {
-        return { x, date: startDate }
-      } else {
-        x += this.options.column_width;
-      }
+    return {
+      x: x +
+        (date_utils.diff(today, this.gantt_start, "hour") / this.options.step) *
+        this.options.column_width,
+      date: today
     }
   }
 
@@ -949,26 +912,21 @@ export default class Gantt {
       this.view_is(VIEW_MODE.YEAR)
     ) {
       // Used as we must find the _end_ of session if view is not Day
-      // const grid_width = this.dates.length * this.options.column_width;
-      // this.$today_overlay = this.create_el({ width: grid_width, classes: 'gantt-today-overlay', append_to: this.$container_main })
 
       const { x: left, date } = this.computeGridHighlightDimensions(this.options.view_mode)
-      const cHeight = (this.options.bar_height + this.options.padding) * this.tasks.length;
-      const pHeight = this.$container_main.clientHeight;
-      const height = Math.max(cHeight, pHeight);
 
-      this.$today_overlay = this.create_el({
-          top: 0,
-          left,
-          height,
-          classes: 'today-highlight',
-          append_to: this.$container_main,
+      createSVG("path", {
+        d: `M ${left} 0 v 5000`,
+        class: "today-date-line",
+        append_to: this.layers.today,
       });
 
-      let $today = document.getElementById(date_utils.format(date).replaceAll(' ', '_'))
-      $today.classList.add('today-date-highlight')
-      $today.style.top = +$today.style.top.slice(0, -2) - 4 + 'px'
-      $today.style.left = +$today.style.left.slice(0, -2) - 8 + 'px'
+      const $today = document.getElementById(date_utils.format(date).replaceAll(' ', '_'))
+      if ($today) {
+        $today.classList.add('today-date-highlight')
+        $today.style.top = +$today.style.top.slice(0, -2) - 4 + 'px'
+        $today.style.left = +$today.style.left.slice(0, -2) - 8 + 'px'
+      }
     }
   }
 
@@ -1196,8 +1154,9 @@ export default class Gantt {
     );
     // 1/3 padding
     const sharing = parent_element.clientWidth / 3;
-    const space = Math.floor(sharing / this.options.column_width) * this.options.step;
+    const space = sharing / this.options.column_width * this.options.step;
     const distance = hours_before_first_task - space;
+
     // position
     const scroll_pos = (distance / this.options.step) * this.options.column_width;
     // smooth、auto
@@ -1356,6 +1315,7 @@ export default class Gantt {
     }
 
     $.on(this.$svg, "mousedown", ".bar-wrapper, .handle", (e, element) => {
+      console.log('ddd ==> mousedown')
       const bar_wrapper = $.closest(".bar-wrapper", element);
       bars.forEach((bar) => bar.group.classList.remove("active"));
 
@@ -1538,6 +1498,7 @@ export default class Gantt {
     let $bar = null;
 
     $.on(this.$svg, "mousedown", ".handle.progress", (e, handle) => {
+      console.log('ddd ==> progress')
       is_resizing = true;
       x_on_start = e.offsetX;
       y_on_start = e.offsetY;
@@ -1769,7 +1730,6 @@ export default class Gantt {
     this.$svg.innerHTML = "";
     this.$container_toolbar.innerHTML = "";
     this.$header?.remove?.()
-    this.$today_overlay?.remove?.();
     this.hide_popup();
   }
 }

@@ -13,9 +13,6 @@
 .dark > .gantt-container .tick {
   stroke: #616161;
 }
-.dark > .gantt-container .today-highlight {
-  opacity: 0.2;
-}
 .dark > .gantt-container .arrow {
   stroke: #eee;
 }
@@ -153,19 +150,12 @@
   position: absolute;
   display: none;
 }
-.gantt-container .gantt-today-overlay {
-  position: absolute;
-  left: 0;
-  top: 0;
-}
-.gantt-container .today-highlight {
-  position: absolute;
-  background: #2c94ec;
-  width: 1px;
-  bottom: 0;
+.gantt-container .today-date-line {
+  stroke: #f85710;
+  stroke-width: 1;
 }
 .gantt-container .today-date-highlight {
-  background: #2c94ec;
+  background: #f85710;
   color: #fff;
   padding: 4px 8px;
   border-radius: 200px;
@@ -238,7 +228,7 @@
   fill: #94c4f4;
 }
 .gantt .bar-wrapper.important .bar-progress {
-  fill: #2c94ec;
+  fill: #f85710;
 }
 .gantt .handle {
   fill: #dcdce4;
