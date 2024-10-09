@@ -83,24 +83,24 @@ export default class Bar {
     this.compute_y();
 
     if (this.empty) return;
-    // redraw-bar_group
+    // update-bar_group
     Array.prototype.forEach.call(this.bar_group.children, function (el, i) {
       const y = $.attr(el, 'y') * 1;
       el.setAttribute('y', y + offset);
     });
-    // redraw-thumbnail
+    // update-thumbnail
     if (this.task.thumbnail) {
       const $thumbnail = this.bar_group.querySelector('#rect_' + this.task.id);
       const y = $.attr($thumbnail, 'y') * 1;
       $thumbnail.setAttribute('y', y + offset);
     }
-    // redraw-handle_group
+    // update-handle_group
     Array.prototype.forEach.call(this.handle_group.children, function (el, i, arr) {
       // if (i === arr.length-1) return;
       const y = $.attr(el, 'y') * 1;
       el.setAttribute('y', y + offset);
     });
-    // redraw-polygon
+    // update-polygon
     const $handle = this.$handle_progress;
     if ($handle) {
       $handle.setAttribute('points', this.get_progress_polygon_points());
@@ -399,6 +399,7 @@ export default class Bar {
         }
       }
 
+      console.log('ddd ==> x', this);
       this.update_attr(bar, "x", x);
       if (this.$date_highlight) this.$date_highlight.style.left = x + 'px';
     }
@@ -450,6 +451,8 @@ export default class Bar {
   date_changed() {
     let changed = false;
     const { new_start_date, new_end_date } = this.compute_start_end_date();
+    console.log('ddd ==> changed', this.task);
+    console.log('ddd ==> compute_start_end_date', new_start_date, new_end_date);
 
     if (Number(this.task._start) !== Number(new_start_date)) {
       changed = true;
@@ -469,14 +472,16 @@ export default class Bar {
       this.$bar.classList.remove('bar-invalid');
     }
 
-    // TODO out of limit to redraw
-    // if (
-    //     new_start_date < this.gantt.gantt_start ||
-    //     new_end_date > this.gantt.gantt_end
-    // ) {
-    //     this.gantt.refresh_view_date();
-    //     return;
-    // }
+    // TODO out of limit date
+    if (
+        new_start_date < this.gantt.gantt_start ||
+        new_end_date > this.gantt.gantt_end
+    ) {
+      // this.gantt.redraw({
+      //   start: new_start_date,
+      //   end: new_end_date,
+      // });
+    }
 
     this.gantt.trigger_event("date_change", [
       this.task,

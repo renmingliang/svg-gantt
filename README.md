@@ -28,18 +28,15 @@ If you want to contribute enhancements or fixes:
 
 
 ### Feature
-1. 局部更新数据，添加or删除；
-2. 点击绘制Bar；
-3. 限制容器高度滚动；
-
+1. 支持季度；
+2. 局部更新数据，添加or删除；
+3. 点击绘制Bar；
+4. 限制容器高度滚动；
+5. view_mode_padding - 存在数据日期情况下，生效；若未有效，则设置默认值长度；
+6. today - scrollTo 日期1/3位置显示；
+7. 未设置开始时间 or 结束时间 -> 相应变更对于时间点 才更新；
+8. 无tasks数据时，空绘制；
 
 ### TODO
-0. 季度
 1. 拖拽超限 this.gantt_start 与 this.gantt_end，需更新画布；
 2. 点击创建Bar后，make_arrows可动态创建；
-3. 点击事件冲突！！！
-4. view_mode_padding - 存在数据日期情况下，生效；若未有效，则设置默认值长度；
-5. today - scrollTo 日期居中位置显示；
-6. 未设置开始时间 or 结束时间 -> 相应变更对于时间点 才更新；
-7. 无tasks数据时，空绘制；
-
