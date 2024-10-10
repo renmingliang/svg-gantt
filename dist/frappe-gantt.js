@@ -481,6 +481,17 @@ var Gantt = (function () {
       return wrapper;
   };
 
+  const VIEW_MODE = {
+    HOUR: "Hour",
+    QUARTER_DAY: "Quarter Day",
+    HALF_DAY: "Half Day",
+    DAY: "Day",
+    WEEK: "Week",
+    MONTH: "Month",
+    QUARTER_YEAR: "Quarter Year",
+    YEAR: "Year",
+  };
+
   const getLang = function(lan) {
     if (lan === 'zh') {
       return LAN_ZH;
@@ -758,17 +769,6 @@ var Gantt = (function () {
       const gw = bar.getWidth();
 
       createSVG("rect", {
-        x: bar.getX() + (gw > handle_width ? (gw - handle_width - 1) : (gw + handle_width)),
-        y: bar.getY() + 1,
-        width: handle_width,
-        height: this.height - 2,
-        rx: this.corner_radius,
-        ry: this.corner_radius,
-        class: "handle right",
-        append_to: this.handle_group,
-      });
-
-      createSVG("rect", {
         x: bar.getX() + 1,
         y: bar.getY() + 1,
         width: handle_width,
@@ -776,6 +776,17 @@ var Gantt = (function () {
         rx: this.corner_radius,
         ry: this.corner_radius,
         class: "handle left",
+        append_to: this.handle_group,
+      });
+
+      createSVG("rect", {
+        x: bar.getX() + (gw > handle_width ? (gw - handle_width - 1) : gw),
+        y: bar.getY() + 1,
+        width: handle_width,
+        height: this.height - 2,
+        rx: this.corner_radius,
+        ry: this.corner_radius,
+        class: "handle right",
         append_to: this.handle_group,
       });
 
@@ -894,7 +905,7 @@ var Gantt = (function () {
 
     update_bar_position({ x = null, width = null }) {
       const bar = this.$bar;
-      if (x) {
+      if (x != undefined) {
         if (this.gantt.options.drag_limit_child) {
           // get all x values of parent task
           const xs = this.task.dependencies.map((dep) => {
@@ -911,7 +922,6 @@ var Gantt = (function () {
           }
         }
 
-        console.log('ddd ==> x', this);
         this.update_attr(bar, "x", x);
         if (this.$date_highlight) this.$date_highlight.style.left = x + 'px';
       }
@@ -963,8 +973,6 @@ var Gantt = (function () {
     date_changed() {
       let changed = false;
       const { new_start_date, new_end_date } = this.compute_start_end_date();
-      console.log('ddd ==> changed', this.task);
-      console.log('ddd ==> compute_start_end_date', new_start_date, new_end_date);
 
       if (Number(this.task._start) !== Number(new_start_date)) {
         changed = true;
@@ -983,12 +991,6 @@ var Gantt = (function () {
         this.task.invalid = false;
         this.$bar.classList.remove('bar-invalid');
       }
-
-      // TODO out of limit date
-      if (
-          new_start_date < this.gantt.gantt_start ||
-          new_end_date > this.gantt.gantt_end
-      ) ;
 
       this.gantt.trigger_event("date_change", [
         this.task,
@@ -1036,7 +1038,7 @@ var Gantt = (function () {
       this.expected_progress =
         date_utils.diff(date_utils.today(), this.task._start, "hour") /
         this.gantt.options.step;
-      // 未到当前日期
+      // Revision date after today
       if (this.expected_progress < 0) {
         this.expected_progress = 0;
       }
@@ -1056,7 +1058,7 @@ var Gantt = (function () {
       const diff = date_utils.diff(task_start, gantt_start, "hour");
       let x = (diff / step) * column_width;
 
-      if (this.gantt.view_is("Month")) {
+      if (this.gantt.view_is(VIEW_MODE.MONTH)) {
         const diff = date_utils.diff(task_start, gantt_start, "day");
         x = (diff * column_width) / 30;
       }
@@ -1083,7 +1085,7 @@ var Gantt = (function () {
         rem,
         position;
 
-      if (this.gantt.view_is("Week")) {
+      if (this.gantt.view_is(VIEW_MODE.WEEK)) {
         rem = dx % (this.gantt.options.column_width / 7);
         position =
           odx -
@@ -1091,7 +1093,7 @@ var Gantt = (function () {
           (rem < this.gantt.options.column_width / 14
             ? 0
             : this.gantt.options.column_width / 7);
-      } else if (this.gantt.view_is("Month")) {
+      } else if (this.gantt.view_is(VIEW_MODE.MONTH)) {
         rem = dx % (this.gantt.options.column_width / 30);
         position =
           odx -
@@ -1141,6 +1143,11 @@ var Gantt = (function () {
         "width",
         this.$bar.getWidth() * (this.task.progress / 100),
       );
+
+      const $handle = this.$handle_progress;
+      if ($handle) {
+        $handle.setAttribute('points', this.get_progress_polygon_points());
+      }
     }
 
     update_label_position() {
@@ -1186,8 +1193,6 @@ var Gantt = (function () {
       this.handle_group
         .querySelector(".handle.right")
         .setAttribute("x", bar.getEndX() - handle_width - 1);
-      const handle = this.handle_group.querySelector('.handle.progress');
-      handle && handle.setAttribute("points", this.get_progress_polygon_points());
     }
 
     update_arrow_position() {
@@ -1416,17 +1421,6 @@ var Gantt = (function () {
     }
   }
 
-  const VIEW_MODE = {
-    HOUR: "Hour",
-    QUARTER_DAY: "Quarter Day",
-    HALF_DAY: "Half Day",
-    DAY: "Day",
-    WEEK: "Week",
-    MONTH: "Month",
-    QUARTER_YEAR: "Quarter Year",
-    YEAR: "Year",
-  };
-
   const VIEW_MODE_PADDING = {
     HOUR: ["7d", "7d"],
     QUARTER_DAY: ["7d", "7d"],
@@ -1455,10 +1449,10 @@ var Gantt = (function () {
     padding: 18,
     view_modes: [...Object.values(VIEW_MODE)],
     view_mode: VIEW_MODE.DAY,
-    date_format: "YYYY-MM-DD",
     popup_trigger: "click",
     show_expected_progress: false,
     dependencies: "arrow",
+    drag_ignore_hours: true,
     drag_bar_progress: true,
     drag_sync_child: false,
     drag_limit_child: false,
@@ -1714,11 +1708,7 @@ var Gantt = (function () {
       if (Number(original._start) !== Number(update_task._start)) {
         // move-left
         const start_date = date_utils.parse(update_task._start);
-        const dx =
-            (date_utils.diff(original._start, start_date, 'hour') /
-                this.options.step) *
-            this.options.column_width;
-
+        const dx = this.get_snap_x(original._start, start_date);
         bar.update_bar_position({
             x: bar.$bar.getX() - dx,
             width: bar.$bar.getWidth() + dx,
@@ -1728,11 +1718,7 @@ var Gantt = (function () {
       if (Number(original._end) !== Number(update_task._end)) {
         // move-right
         const end_date = date_utils.parse(update_task._end);
-        const dx =
-            (date_utils.diff(original._end, end_date, 'hour') /
-                this.options.step) *
-            this.options.column_width;
-
+        const dx = this.get_snap_x(original._end, end_date);
         bar.update_bar_position({
           width: bar.$bar.getWidth() - dx,
         });
@@ -1786,12 +1772,12 @@ var Gantt = (function () {
     insert(task, index) {
       let target;
       if (index === undefined) {
-        target = this.tasks.length; // 默认队尾
+        target = this.tasks.length; // default end
       } else if (typeof index === 'object') {
-        target = this.tasks.findIndex(task => task.id === index.id); // 指定元素
-        target += 1; // 其后
+        target = this.tasks.findIndex(task => task.id === index.id);
+        target += 1; // target task
       } else {
-        target = index; // 指定位置
+        target = index; // target index
       }
       const insert_task = this.format_task(task, target);
       // resort task._index
@@ -1803,8 +1789,19 @@ var Gantt = (function () {
       // insert task target
       this.tasks.splice(target, 0, insert_task);
       this.setup_dependencies();
-      if (insert_task._start && insert_task._start < this.gantt_start) ;
-      if (insert_task._end && insert_task._end > this.gantt_end) ;
+
+      // calculate daterange
+      let limit_start = null, limit_end = null;
+      if (insert_task._start && insert_task._start < this.gantt_start) {
+        limit_start = insert_task._start;
+      }
+      if (insert_task._end && insert_task._end > this.gantt_end) {
+        limit_end = insert_task._end;
+      }
+      // TODO out of limit date
+      if (limit_start || limit_end) {
+        this.redraw_date({ start: limit_start, end: limit_end });
+      }
 
       // update bars y
       const row_height = this.options.bar_height + this.options.padding;
@@ -1879,11 +1876,14 @@ var Gantt = (function () {
     }
 
     change_view_mode(mode = this.options.view_mode) {
+      const record_start = performance.now();
       this.update_view_scale(mode);
       this.setup_dates();
       this.render();
-      // fire viewmode_change event
-      this.trigger_event("view_change", [mode]);
+      const record_end = performance.now();
+      const record_time = record_end - record_start;
+      // fire viewmode_change event delay
+      this.trigger_event('view_change', [mode, record_time]);
     }
 
     update_view_scale(view_mode) {
@@ -1968,7 +1968,7 @@ var Gantt = (function () {
       let format_string;
       if (this.view_is(VIEW_MODE.YEAR)) {
           format_string = 'YYYY';
-      } else if (this.view_is(VIEW_MODE.MONTH) || this.view_is(VIEW_MODE.QUARTER_YEAR)) {
+      } else if (this.view_is([VIEW_MODE.MONTH, VIEW_MODE.QUARTER_YEAR])) {
           format_string = 'YYYY-MM';
       } else if (this.view_is(VIEW_MODE.DAY)) {
           format_string = 'YYYY-MM-DD';
@@ -2016,13 +2016,13 @@ var Gantt = (function () {
     }
 
     // TODO
-    redraw({ start, end }) {
-      console.log('ddd ==> redraw', start, end);
-      if (start) {
-        this.redraw_left(start);
-      }
+    redraw_date({ start, end }) {
+      console.log('ddd ==> redraw_date', start, end);
+      // if (start) {
+      //   this.redraw_left(start);
+      // }
 
-      this.redraw_layout();
+      // this.redraw_layout();
     }
 
     redraw_left(start) {
@@ -2039,7 +2039,7 @@ var Gantt = (function () {
       this.gantt_start = start_date;
       // 插入周末
       if (!this.options.highlight_weekend) return;
-      if (!this.view_is('Day') && !this.view_is('Half Day')) return;
+      if (!this.view_is([VIEW_MODE.DAY, VIEW_MODE.HALF_DAY])) return;
       const weekends_fragment = this.getHighlightWeekends_fragment(
           start_date,
           this.gantt_prev_start,
@@ -2372,7 +2372,7 @@ var Gantt = (function () {
 
     highlightWeekends() {
       if (!this.options.highlight_weekend) return;
-      if (!this.view_is('Day') && !this.view_is('Half Day')) return;
+      if (!this.view_is([VIEW_MODE.DAY, VIEW_MODE.HALF_DAY])) return;
       const weekends_fragment = this.getHighlightWeekends_fragment(this.gantt_start, this.gantt_end);
       this.layers.grid.appendChild(weekends_fragment);
     }
@@ -2381,13 +2381,11 @@ var Gantt = (function () {
       const weekends_fragment = document.createDocumentFragment();
       for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
         if (d.getDay() === 0 || d.getDay() === 6) {
-          const x = (date_utils.diff(d, this.gantt_start, 'hour') /
-            this.options.step) *
-            this.options.column_width;
+          const x = this.get_snap_x(d, this.gantt_start);
           createSVG('rect', {
             x,
             y: 0,
-            width: (this.view_is('Day') ? 1 : 2) * this.options.column_width,
+            width: (this.view_is(VIEW_MODE.DAY) ? 1 : 2) * this.options.column_width,
             height: '100%',
             class: 'holiday-highlight',
             append_to: weekends_fragment,
@@ -2403,9 +2401,7 @@ var Gantt = (function () {
       let x = view_mode === VIEW_MODE.DAY ? this.options.column_width / 2 : 0;
 
       return {
-        x: x +
-          (date_utils.diff(today, this.gantt_start, "hour") / this.options.step) *
-          this.options.column_width,
+        x: x + this.get_snap_x(today, this.gantt_start),
         date: today
       }
     }
@@ -2529,9 +2525,6 @@ var Gantt = (function () {
             ? date_utils.format(date, "YYYY年", this.options.language)
             : "",
         Year_upper: ""
-          // !last_date_info || date.getFullYear() !== last_date.getFullYear()
-          //   ? date_utils.format(date, "YYYY年", this.options.language)
-          //   : "",
       };
 
       // special Month scale
@@ -2560,10 +2553,8 @@ var Gantt = (function () {
         Day_lower: column_width / 2,
         Day_upper: column_width / 2,
         Week_lower: column_width / 2,
-        // Week_upper: (column_width * 4) / 2,
         Week_upper: 19,
         Month_lower: column_width / 2,
-        // Month_upper: column_width / 2,
         Month_upper: 19,
         "Quarter Year_lower": column_width / 2,
         "Quarter Year_upper": (column_width * 4) / 2,
@@ -2761,16 +2752,13 @@ var Gantt = (function () {
         // start record
         is_creating = true;
         x_on_start = e.offsetX;
-        [, y_on_start] = this.get_snap_coord(e.offsetX, e.offsetY);
-        // const date = this.get_snap_date(x_on_start);
+        y_on_start = this.get_snap_y(e.offsetY);
       });
 
       $.on(this.$svg, "mousemove", (e) => {
         if (!is_creating) return;
         let dx = e.offsetX - x_on_start;
 
-        // limit block
-        // const width = this.get_snap_position(Math.abs(dx));
         // free distance
         const width = Math.abs(dx);
         // create rect
@@ -2802,8 +2790,15 @@ var Gantt = (function () {
         if (holder) {
           const start_x = holder.getX();
           const end_x = holder.getX() + holder.getBBox().width;
-          const date_start = this.get_snap_date(start_x);
-          const date_end = this.get_snap_date(end_x);
+          let date_start = this.get_snap_date(start_x);
+          let date_end = this.get_snap_date(end_x);
+          if (this.options.drag_ignore_hours) {
+            // Non-hourly computation
+            if (!this.view_is([VIEW_MODE.HOUR, VIEW_MODE.QUARTER_DAY, VIEW_MODE.HALF_DAY])) {
+              date_start = new Date(date_start.setHours(0, 0, 0, 0));
+              date_end = new Date(date_end.setHours(23, 59, 59, 59));
+            }
+          }
 
           const update_task = Object.assign(matched_task, {
               start: date_start,
@@ -2892,13 +2887,10 @@ var Gantt = (function () {
         bars.forEach((bar) => {
           if (bar.empty) return;
           const $bar = bar.$bar;
-          // limit-block
-          // $bar.finaldx = this.get_snap_position(dx);
           // free-distance
           $bar.finaldx = dx;
           this.hide_popup();
           if (is_resizing_left) {
-            // 左不能大于右
             if ($bar.finaldx - $bar.owidth + handle_width >= 0) return;
             if (parent_bar_id === bar.task.id) {
               bar.update_bar_position({
@@ -2911,14 +2903,13 @@ var Gantt = (function () {
               });
             }
           } else if (is_resizing_right) {
-            // 右不能小于左
             if ($bar.finaldx + $bar.owidth < handle_width) return;
             if (parent_bar_id === bar.task.id) {
               bar.update_bar_position({
                 width: $bar.owidth + $bar.finaldx,
               });
             }
-          } else if (is_dragging && !this.options.readonly) {
+          } else if (is_dragging) {
             bar.update_bar_position({ x: $bar.ox + $bar.finaldx });
           }
 
@@ -2947,6 +2938,32 @@ var Gantt = (function () {
           if (bar.empty) return;
           const $bar = bar.$bar;
           if (!$bar.finaldx) return;
+
+          // calculate start_date end_date
+          const date_snap_start = this.get_snap_date($bar.getX());
+          const date_start = new Date(date_snap_start.setHours(0, 0, 0, 0));
+          const dx_start = this.get_snap_x(date_start, this.gantt_start);
+
+          const date_snap_end = this.get_snap_date($bar.getEndX());
+          const date_subtract = date_utils.add(date_utils.add(date_snap_end, 1, 'day'), -1, 'second');
+          const date_end = new Date(date_subtract.setHours(0, 0, 0, 0));
+          const dx_end = this.get_snap_x(date_end, this.gantt_start);
+
+          if (this.options.drag_ignore_hours) {
+            // calculate drop coord
+            if (!this.view_is([VIEW_MODE.HOUR, VIEW_MODE.QUARTER_DAY, VIEW_MODE.HALF_DAY])) {
+              bar.update_bar_position({
+                x: dx_start,
+                width: dx_end - dx_start,
+              });
+            }
+          }
+
+          // TODO out of limit date
+          if (date_start < this.gantt_start || date_end > this.gantt_end) {
+            this.redraw_date({ start: date_start, end: date_end });
+          }
+
           $bar.finaldx = 0;
           bar.date_changed();
           bar.set_action_completed();
@@ -2970,8 +2987,8 @@ var Gantt = (function () {
 
         const daysSinceStart = e.currentTarget.scrollLeft / this.options.column_width * this.options.step / 24;
         let format_str = "D MMM";
-        if ([VIEW_MODE.YEAR, VIEW_MODE.QUARTER_YEAR, VIEW_MODE.MONTH].includes(this.options.view_mode)) format_str = 'YYYY年';
-        else if ([VIEW_MODE.DAY, VIEW_MODE.WEEK].includes(this.options.view_mode)) format_str = 'YYYY年MM月';
+        if (this.view_is([VIEW_MODE.YEAR, VIEW_MODE.QUARTER_YEAR, VIEW_MODE.MONTH])) format_str = 'YYYY年';
+        else if (this.view_is([VIEW_MODE.DAY, VIEW_MODE.WEEK])) format_str = 'YYYY年MM月';
         else if (this.view_is(VIEW_MODE.HALF_DAY)) format_str = 'D MMM';
         else if (this.view_is(VIEW_MODE.HOUR)) format_str = 'D MMMM';
 
@@ -3091,67 +3108,6 @@ var Gantt = (function () {
       return out.filter(Boolean);
     }
 
-    get_snap_position(dx) {
-      let odx = dx,
-        rem,
-        position;
-
-      if (this.view_is(VIEW_MODE.WEEK)) {
-        rem = dx % (this.options.column_width / 7);
-        position =
-          odx -
-          rem +
-          (rem < this.options.column_width / 14
-            ? 0
-            : this.options.column_width / 7);
-      } else if (this.view_is(VIEW_MODE.MONTH)) {
-        rem = dx % (this.options.column_width / 30);
-        position =
-          odx -
-          rem +
-          (rem < this.options.column_width / 60
-            ? 0
-            : this.options.column_width / 30);
-      } else if (this.view_is(VIEW_MODE.YEAR)) {
-        rem = dx % (this.options.column_width / 365);
-        position =
-          odx -
-          rem +
-          (rem < this.options.column_width / 120
-            ? 0
-            : this.options.column_width / 365);
-      } else {
-        rem = dx % this.options.column_width;
-        position =
-          odx -
-          rem +
-          (rem < this.options.column_width / 2 ? 0 : this.options.column_width);
-      }
-      return position;
-    }
-
-    get_snap_coord(ox, oy) {
-      let start_x = ox;
-      // 网格区
-      if (
-        this.view_is(VIEW_MODE.HOUR) ||
-        this.view_is(VIEW_MODE.HALF_DAY) ||
-        this.view_is(VIEW_MODE.QUARTER_DAY) ||
-        this.view_is(VIEW_MODE.DAY)
-      ) {
-        start_x = parseInt(ox / this.options.column_width) * this.options.column_width;
-      }
-
-      const padding = this.options.padding / 2;
-      const header_height = 0;
-      const row_height = this.options.bar_height + this.options.padding;
-
-      const mod = parseInt((oy - header_height) / row_height);
-      const start_y = header_height + mod * row_height + padding;
-
-      return [start_x, start_y];
-    }
-
     get_snap_date(x) {
       const x_in_units = x / this.options.column_width;
       return date_utils.add(
@@ -3159,6 +3115,20 @@ var Gantt = (function () {
         x_in_units * this.options.step,
         "hour",
       );
+    }
+
+    get_snap_x(end, start) {
+      const hours = date_utils.diff(end, start, 'hour');
+      return hours / this.options.step * this.options.column_width;
+    }
+
+    get_snap_y(oy) {
+      const padding = this.options.padding / 2;
+      const header_height = 0;
+      const row_height = this.options.bar_height + this.options.padding;
+
+      const mod = parseInt((oy - header_height) / row_height);
+      return header_height + mod * row_height + padding;
     }
 
     unselect_all() {
@@ -3197,15 +3167,19 @@ var Gantt = (function () {
       }
 
       const { new_start_date, new_end_date } = bar.compute_start_end_date();
+      const subtract_second_date = date_utils.add(new_end_date, -1, 'second');
 
       let symbol = 'MM-DD';
       // different years
-      if (date_utils.format(new_start_date, 'YYYY') !== date_utils.format(new_end_date, 'YYYY')) {
-        symbol = 'YYYY-MM-DD';
+      if (
+          date_utils.format(new_start_date, 'YYYY') !==
+          date_utils.format(subtract_second_date, 'YYYY')
+      ) {
+          symbol = 'YYYY-MM-DD';
       }
 
       const date_start = date_utils.format(new_start_date, symbol);
-      const date_end = date_utils.format(new_end_date, symbol);
+      const date_end = date_utils.format(subtract_second_date, symbol);
       this.backdrop.showAt({ x, width, range: [date_start, date_end] });
     }
 

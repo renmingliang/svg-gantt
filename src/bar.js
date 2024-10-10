@@ -1,5 +1,6 @@
 import date_utils from "./date_utils";
 import { $, createSVG, animateSVG } from "./svg_utils";
+import { VIEW_MODE } from "./lang_utils";
 
 export default class Bar {
   constructor(gantt, task) {
@@ -246,17 +247,6 @@ export default class Bar {
     const gw = bar.getWidth();
 
     createSVG("rect", {
-      x: bar.getX() + (gw > handle_width ? (gw - handle_width - 1) : (gw + handle_width)),
-      y: bar.getY() + 1,
-      width: handle_width,
-      height: this.height - 2,
-      rx: this.corner_radius,
-      ry: this.corner_radius,
-      class: "handle right",
-      append_to: this.handle_group,
-    });
-
-    createSVG("rect", {
       x: bar.getX() + 1,
       y: bar.getY() + 1,
       width: handle_width,
@@ -264,6 +254,17 @@ export default class Bar {
       rx: this.corner_radius,
       ry: this.corner_radius,
       class: "handle left",
+      append_to: this.handle_group,
+    });
+
+    createSVG("rect", {
+      x: bar.getX() + (gw > handle_width ? (gw - handle_width - 1) : gw),
+      y: bar.getY() + 1,
+      width: handle_width,
+      height: this.height - 2,
+      rx: this.corner_radius,
+      ry: this.corner_radius,
+      class: "handle right",
       append_to: this.handle_group,
     });
 
@@ -382,7 +383,7 @@ export default class Bar {
 
   update_bar_position({ x = null, width = null }) {
     const bar = this.$bar;
-    if (x) {
+    if (x != undefined) {
       if (this.gantt.options.drag_limit_child) {
         // get all x values of parent task
         const xs = this.task.dependencies.map((dep) => {
@@ -399,7 +400,6 @@ export default class Bar {
         }
       }
 
-      console.log('ddd ==> x', this);
       this.update_attr(bar, "x", x);
       if (this.$date_highlight) this.$date_highlight.style.left = x + 'px';
     }
@@ -451,8 +451,6 @@ export default class Bar {
   date_changed() {
     let changed = false;
     const { new_start_date, new_end_date } = this.compute_start_end_date();
-    console.log('ddd ==> changed', this.task);
-    console.log('ddd ==> compute_start_end_date', new_start_date, new_end_date);
 
     if (Number(this.task._start) !== Number(new_start_date)) {
       changed = true;
@@ -470,17 +468,6 @@ export default class Bar {
       this.invalid = false;
       this.task.invalid = false;
       this.$bar.classList.remove('bar-invalid');
-    }
-
-    // TODO out of limit date
-    if (
-        new_start_date < this.gantt.gantt_start ||
-        new_end_date > this.gantt.gantt_end
-    ) {
-      // this.gantt.redraw({
-      //   start: new_start_date,
-      //   end: new_end_date,
-      // });
     }
 
     this.gantt.trigger_event("date_change", [
@@ -529,7 +516,7 @@ export default class Bar {
     this.expected_progress =
       date_utils.diff(date_utils.today(), this.task._start, "hour") /
       this.gantt.options.step;
-    // 未到当前日期
+    // Revision date after today
     if (this.expected_progress < 0) {
       this.expected_progress = 0;
     }
@@ -549,7 +536,7 @@ export default class Bar {
     const diff = date_utils.diff(task_start, gantt_start, "hour");
     let x = (diff / step) * column_width;
 
-    if (this.gantt.view_is("Month")) {
+    if (this.gantt.view_is(VIEW_MODE.MONTH)) {
       const diff = date_utils.diff(task_start, gantt_start, "day");
       x = (diff * column_width) / 30;
     }
@@ -576,7 +563,7 @@ export default class Bar {
       rem,
       position;
 
-    if (this.gantt.view_is("Week")) {
+    if (this.gantt.view_is(VIEW_MODE.WEEK)) {
       rem = dx % (this.gantt.options.column_width / 7);
       position =
         odx -
@@ -584,7 +571,7 @@ export default class Bar {
         (rem < this.gantt.options.column_width / 14
           ? 0
           : this.gantt.options.column_width / 7);
-    } else if (this.gantt.view_is("Month")) {
+    } else if (this.gantt.view_is(VIEW_MODE.MONTH)) {
       rem = dx % (this.gantt.options.column_width / 30);
       position =
         odx -
@@ -634,6 +621,11 @@ export default class Bar {
       "width",
       this.$bar.getWidth() * (this.task.progress / 100),
     );
+
+    const $handle = this.$handle_progress;
+    if ($handle) {
+      $handle.setAttribute('points', this.get_progress_polygon_points());
+    }
   }
 
   update_label_position() {
@@ -679,8 +671,6 @@ export default class Bar {
     this.handle_group
       .querySelector(".handle.right")
       .setAttribute("x", bar.getEndX() - handle_width - 1);
-    const handle = this.handle_group.querySelector('.handle.progress');
-    handle && handle.setAttribute("points", this.get_progress_polygon_points());
   }
 
   update_arrow_position() {

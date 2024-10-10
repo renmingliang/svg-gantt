@@ -51,8 +51,8 @@ var tasks = [
         custom_class: 'bar-milestone',
     },
     {
-        start: '2025-01-05',
-        end: '2025-10-12',
+        start: '2024-04-05',
+        end: '2024-10-12',
         name: 'Long term task',
         id: 'Task 6',
         progress: 0,

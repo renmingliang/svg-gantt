@@ -1,3 +1,14 @@
+export const VIEW_MODE = {
+  HOUR: "Hour",
+  QUARTER_DAY: "Quarter Day",
+  HALF_DAY: "Half Day",
+  DAY: "Day",
+  WEEK: "Week",
+  MONTH: "Month",
+  QUARTER_YEAR: "Quarter Year",
+  YEAR: "Year",
+};
+
 export const getLang = function(lan) {
   if (lan === 'zh') {
     return LAN_ZH;
