@@ -79,35 +79,6 @@ export default class Bar {
       (this.expected_progress / 100) || 0;
   }
 
-  update_bar_vertical({ offset }) {
-    // recalculate
-    this.compute_y();
-
-    if (this.empty) return;
-    // update-bar_group
-    Array.prototype.forEach.call(this.bar_group.children, function (el, i) {
-      const y = $.attr(el, 'y') * 1;
-      el.setAttribute('y', y + offset);
-    });
-    // update-thumbnail
-    if (this.task.thumbnail) {
-      const $thumbnail = this.bar_group.querySelector('#rect_' + this.task.id);
-      const y = $.attr($thumbnail, 'y') * 1;
-      $thumbnail.setAttribute('y', y + offset);
-    }
-    // update-handle_group
-    Array.prototype.forEach.call(this.handle_group.children, function (el, i, arr) {
-      // if (i === arr.length-1) return;
-      const y = $.attr(el, 'y') * 1;
-      el.setAttribute('y', y + offset);
-    });
-    // update-polygon
-    const $handle = this.$handle_progress;
-    if ($handle) {
-      $handle.setAttribute('points', this.get_progress_polygon_points());
-    }
-  }
-
   draw() {
     if (this.empty) return;
     this.draw_bar();
@@ -381,6 +352,35 @@ export default class Bar {
     if(label) label.innerHTML = task.name;
   }
 
+  update_bar_vertical({ offset }) {
+    // recalculate
+    this.compute_y();
+
+    if (this.empty) return;
+    // update-bar_group
+    Array.prototype.forEach.call(this.bar_group.children, function (el, i) {
+      const y = $.attr(el, 'y') * 1;
+      el.setAttribute('y', y + offset);
+    });
+    // update-thumbnail
+    if (this.task.thumbnail) {
+      const $thumbnail = this.bar_group.querySelector('#rect_' + this.task.id);
+      const y = $.attr($thumbnail, 'y') * 1;
+      $thumbnail.setAttribute('y', y + offset);
+    }
+    // update-handle_group
+    Array.prototype.forEach.call(this.handle_group.children, function (el, i, arr) {
+      // if (i === arr.length-1) return;
+      const y = $.attr(el, 'y') * 1;
+      el.setAttribute('y', y + offset);
+    });
+    // update-polygon
+    const $handle = this.$handle_progress;
+    if ($handle) {
+      $handle.setAttribute('points', this.get_progress_polygon_points());
+    }
+  }
+
   update_bar_position({ x = null, width = null }) {
     const bar = this.$bar;
     if (x != undefined) {
@@ -544,10 +544,6 @@ export default class Bar {
   }
 
   compute_y() {
-    // this.y =
-    //   this.gantt.options.header_height +
-    //   this.gantt.options.padding / 2 +
-    //   this.task._index * (this.height + this.gantt.options.padding);
     this.y = this.gantt.options.padding / 2 +
       this.task._index * (this.height + this.gantt.options.padding);
   }
@@ -629,33 +625,33 @@ export default class Bar {
   }
 
   update_label_position() {
-    const img_mask = this.bar_group.querySelector('.img_mask') || '';
+    const img_mask = this.bar_group.querySelector('.img_mask');
     const bar = this.$bar,
       label = this.group.querySelector(".bar-label"),
       img = this.group.querySelector('.bar-img');
 
-
-    let padding = 10;
+    let x_offset = 10;
     let x_offset_label_img = this.image_size + 5;
-    const labelWidth = label.getBBox().width
-    const barWidth = bar.getWidth()
-    if (labelWidth > barWidth) {
+    const barWidth = bar.getWidth();
+    const labelWidth = label.getBBox().width;
+    const contentWidth = labelWidth + (img ? x_offset_label_img : 0);
+    if (contentWidth + x_offset > barWidth) {
       label.classList.add("big");
       if (img) {
-        img.setAttribute('x', bar.getX() + barWidth + padding);
-        img_mask.setAttribute('x', bar.getX() + barWidth + padding);
-        label.setAttribute('x', bar.getX() + barWidth + x_offset_label_img);
+        img.setAttribute('x', bar.getX() + barWidth + x_offset);
+        img_mask.setAttribute('x', bar.getX() + barWidth + x_offset);
+        label.setAttribute('x', bar.getX() + barWidth + x_offset + x_offset_label_img);
       } else {
-        label.setAttribute('x', bar.getX() + barWidth + padding);
+        label.setAttribute('x', bar.getX() + barWidth + x_offset);
       }
     } else {
       label.classList.remove("big");
       if (img) {
-        img.setAttribute('x', bar.getX() + padding);
-        img_mask.setAttribute('x', bar.getX() + padding);
-        label.setAttribute('x', bar.getX() + padding + x_offset_label_img);
+        img.setAttribute('x', bar.getX() + x_offset);
+        img_mask.setAttribute('x', bar.getX() + x_offset);
+        label.setAttribute('x', bar.getX() + x_offset + x_offset_label_img);
       } else {
-        label.setAttribute('x', bar.getX() + barWidth / 2 - labelWidth / 2);
+        label.setAttribute('x', bar.getX() + barWidth / 2 - contentWidth / 2);
       }
     }
   }
