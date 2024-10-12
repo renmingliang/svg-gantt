@@ -18,8 +18,8 @@ var tasks = [
         important: true,
     },
     {
-        start: '2024-04-04',
-        end: '2024-04-08',
+        start: '2024-02-04',
+        end: '2024-02-08',
         name: 'Apply new styles',
         id: 'Task 2',
         progress: 80,
@@ -51,7 +51,7 @@ var tasks = [
         custom_class: 'bar-milestone',
     },
     {
-        start: '2024-04-05',
+        start: '2024-08-05',
         end: '2024-10-12',
         name: 'Long term task',
         id: 'Task 6',

@@ -489,19 +489,11 @@ export default class Bar {
   }
 
   compute_start_end_date() {
-    const bar = this.$bar;
-    const x_in_units = bar.getX() / this.gantt.options.column_width;
-    const new_start_date = date_utils.add(
-      this.gantt.gantt_start,
-      x_in_units * this.gantt.options.step,
-      "hour",
-    );
-    const width_in_units = bar.getWidth() / this.gantt.options.column_width;
-    const new_end_date = date_utils.add(
-      new_start_date,
-      width_in_units * this.gantt.options.step,
-      "hour",
-    );
+    const bx = this.$bar.getX();
+    const bw = this.$bar.getWidth();
+
+    const new_start_date = this.gantt.get_snap_date(bx, this.gantt.gantt_start);
+    const new_end_date = this.gantt.get_snap_date(bw, new_start_date);
 
     return { new_start_date, new_end_date };
   }
@@ -552,39 +544,6 @@ export default class Bar {
     this.duration =
       date_utils.diff(this.task._end, this.task._start, "hour") /
       this.gantt.options.step;
-  }
-
-  get_snap_position(dx) {
-    let odx = dx,
-      rem,
-      position;
-
-    if (this.gantt.view_is(VIEW_MODE.WEEK)) {
-      rem = dx % (this.gantt.options.column_width / 7);
-      position =
-        odx -
-        rem +
-        (rem < this.gantt.options.column_width / 14
-          ? 0
-          : this.gantt.options.column_width / 7);
-    } else if (this.gantt.view_is(VIEW_MODE.MONTH)) {
-      rem = dx % (this.gantt.options.column_width / 30);
-      position =
-        odx -
-        rem +
-        (rem < this.gantt.options.column_width / 60
-          ? 0
-          : this.gantt.options.column_width / 30);
-    } else {
-      rem = dx % this.gantt.options.column_width;
-      position =
-        odx -
-        rem +
-        (rem < this.gantt.options.column_width / 2
-          ? 0
-          : this.gantt.options.column_width);
-    }
-    return position;
   }
 
   update_attr(element, attr, value) {
@@ -675,12 +634,4 @@ export default class Bar {
       arrow.update();
     }
   }
-}
-
-function isFunction(functionToCheck) {
-  let getType = {};
-  return (
-    functionToCheck &&
-    getType.toString.call(functionToCheck) === "[object Function]"
-  );
 }
