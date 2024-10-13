@@ -370,7 +370,6 @@ export default class Bar {
     }
     // update-handle_group
     Array.prototype.forEach.call(this.handle_group.children, function (el, i, arr) {
-      // if (i === arr.length-1) return;
       const y = $.attr(el, 'y') * 1;
       el.setAttribute('y', y + offset);
     });

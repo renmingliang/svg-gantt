@@ -892,7 +892,6 @@ var Gantt = (function () {
       }
       // update-handle_group
       Array.prototype.forEach.call(this.handle_group.children, function (el, i, arr) {
-        // if (i === arr.length-1) return;
         const y = $.attr(el, 'y') * 1;
         el.setAttribute('y', y + offset);
       });
@@ -1988,13 +1987,15 @@ var Gantt = (function () {
         const new_gantt_start = new Date(
           date_utils.add(start, -1, 'day').setHours(0, 0, 0, 0),
         );
-        this.gantt_start = new_gantt_start;
-        const dx = this.get_snap_distance(this.old_gantt_start, new_gantt_start);
-        console.log('ddd ==> gantt start', start, this.gantt_start, dx);
+        const left_dates = this.get_left_dates(new_gantt_start, this.old_gantt_start);
+        console.log('ddd ==> gantt_update left_dates', left_dates);
+        this.gantt_start = left_dates[0];
 
+        const dx = this.get_snap_distance(this.old_gantt_start, this.gantt_start);
         this.scale_grid(dx);
         this.translate(dx);
-        this.update_gantt_left();
+
+        this.update_gantt_left(left_dates);
       }
 
       if (end && end > this.gantt_end) {
@@ -2003,22 +2004,15 @@ var Gantt = (function () {
           date_utils.add(end, 1, 'day').setHours(0, 0, 0, 0),
         );
         this.gantt_end = new_gantt_end;
-        const dx = this.get_snap_distance(
-          date_utils.add(new_gantt_end, -1, 'day'),
-          this.old_gantt_end,
-        );
-        console.log('ddd ==> gantt end', end, this.gantt_end, dx);
 
+        const dx = this.get_snap_distance(new_gantt_end, this.old_gantt_end);
         this.scale_grid(dx);
+
         this.update_gantt_right();
       }
     }
 
-    update_gantt_left() {
-      const initial_date = this.gantt_start;
-      // TODO 整格添加
-      const left_dates = this.get_gap_dates(initial_date, this.old_gantt_start);
-      console.log('ddd ==> left_dates', left_dates);
+    update_gantt_left(left_dates) {
       // 绘制
       this.get_dates_to_draw(left_dates, null).forEach((date, i) => {
         this.draw_date(date, i);
@@ -2027,7 +2021,7 @@ var Gantt = (function () {
       this.dates = left_dates.concat(this.dates);
       // 高亮
       this.highlightWeekends(
-        initial_date,
+        this.gantt_start,
         date_utils.add(this.old_gantt_start, -1, 'day'),
       );
       this.highlightToday();
@@ -2035,32 +2029,31 @@ var Gantt = (function () {
       this.draw_col_tick(left_dates);
     }
 
-    get_gap_dates(start, end) {
-      const gap_dates = [];
+    get_left_dates(start, end) {
+      const left_dates = [];
 
-      let start_temp = start;
-      while (start_temp < end) {
-        gap_dates.push(start_temp);
-
+      let start_temp = end;
+      while (start_temp > start) {
         if (this.view_is(VIEW_MODE.YEAR)) {
-          start_temp = date_utils.add(start_temp, 1, 'year');
+          start_temp = date_utils.add(start_temp, -1, 'year');
         } else if (this.view_is(VIEW_MODE.MONTH)) {
-          start_temp = date_utils.add(start_temp, 1, 'month');
+          start_temp = date_utils.add(start_temp, -1, 'month');
         } else if (this.view_is(VIEW_MODE.QUARTER_YEAR)) {
-          start_temp = date_utils.add(start_temp, 3, 'month');
+          start_temp = date_utils.add(start_temp, -3, 'month');
         } else {
-          start_temp = date_utils.add(start_temp, this.options.step, 'hour');
+          start_temp = date_utils.add(start_temp, -this.options.step, 'hour');
         }
+
+        left_dates.unshift(start_temp);
       }
 
-      return gap_dates;
+      return left_dates;
     }
 
     update_gantt_right() {
       const initial_date = this.last_date_info.date;
-      const right_dates = this.get_gap_dates(initial_date, this.gantt_end);
-      console.log('ddd ==> right_dates', right_dates);
-      right_dates.shift();
+      const right_dates = this.get_right_dates(initial_date, this.gantt_end);
+      console.log('ddd ==> gantt_update right_dates', right_dates);
       // 日期
       this.get_dates_to_draw(right_dates, this.last_date_info).forEach(
         (date, i) => {
@@ -2075,6 +2068,25 @@ var Gantt = (function () {
       this.highlightToday();
       // 线条
       this.draw_col_tick(right_dates, initial_date);
+    }
+
+    get_right_dates(start, end) {
+      const right_dates = [];
+
+      let start_temp = start;
+      while (start_temp < end) {
+        if (this.view_is(VIEW_MODE.YEAR)) {
+          start_temp = date_utils.add(start_temp, 1, 'year');
+        } else if (this.view_is(VIEW_MODE.MONTH)) {
+          start_temp = date_utils.add(start_temp, 1, 'month');
+        } else if (this.view_is(VIEW_MODE.QUARTER_YEAR)) {
+          start_temp = date_utils.add(start_temp, 3, 'month');
+        } else {
+          start_temp = date_utils.add(start_temp, this.options.step, 'hour');
+        }
+        right_dates.push(start_temp);
+      }
+      return right_dates;
     }
 
     scale_grid(dx) {
@@ -3040,20 +3052,15 @@ var Gantt = (function () {
           if (!$bar.finaldx) return;
 
           // calculate start_date end_date
-          const { new_start_date: date_snap_start, new_end_date: date_snap_end } =
-            bar.compute_start_end_date();
-          console.log(
-            'ddd ==> date_start-date_end',
-            date_snap_start,
-            date_snap_end,
-          );
+          const { new_start_date, new_end_date } = bar.compute_start_end_date();
 
-          const date_start = new Date(date_snap_start.setHours(0, 0, 0, 0));
+          const date_start = new Date(date_utils.clone(new_start_date).setHours(0, 0, 0, 0));
           const dx_start = this.get_snap_distance(date_start, this.gantt_start);
 
-          const date_end = new Date(
-            date_utils.add(date_snap_end, 1, 'day').setHours(0, 0, 0, 0),
-          );
+          let date_end = new Date(date_utils.clone(new_end_date).setHours(0, 0, 0, 0));
+          if (new_end_date > date_end) {
+            date_end = date_utils.add(date_end, 1, 'day');
+          }
           const dx_end = this.get_snap_distance(date_end, this.gantt_start);
 
           if (this.options.drag_ignore_hours) {
@@ -3233,14 +3240,9 @@ var Gantt = (function () {
       return out.filter(Boolean);
     }
 
-    get_snap_date(x, date = this.gantt_start) {
-      if (this.view_is(VIEW_MODE.MONTH)) {
-        const x_in_units = (x * 30) / this.options.column_width;
-        return date_utils.add(date, x_in_units, 'day');
-      } else {
-        const x_in_units = x / this.options.column_width;
-        return date_utils.add(date, x_in_units * this.options.step, 'hour');
-      }
+    get_snap_date(x, base_date = this.gantt_start) {
+      const x_in_units = x / this.options.column_width;
+      return date_utils.add(base_date, x_in_units * this.options.step, 'hour');
     }
 
     get_snap_distance(end, start) {
@@ -3250,7 +3252,15 @@ var Gantt = (function () {
       if (this.view_is(VIEW_MODE.MONTH)) {
         const days = date_utils.diff(end, start, 'day');
         x = (days * this.options.column_width) / 30;
+
+        // 修正误差
+        const date_coord = this.get_snap_date(x, start);
+        if (date_coord < end) {
+          const diff = date_utils.diff(end, date_coord, 'hour');
+          x += (diff / this.options.step) * this.options.column_width;
+        }
       }
+
       return x;
     }
 
