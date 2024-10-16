@@ -1953,10 +1953,10 @@ var Gantt = (function () {
       this.gantt_end.setHours(0, 0, 0, 0);
 
       // quarter_year start January end December
-      if (this.view_is(VIEW_MODE.QUARTER_YEAR)) {
-        this.gantt_start = new Date(this.gantt_start.setMonth(0, 1));
-        this.gantt_end = new Date(this.gantt_end.setMonth(9, 1));
-      }
+      // if (this.view_is(VIEW_MODE.QUARTER_YEAR)) {
+      //   this.gantt_start = new Date(this.gantt_start.setMonth(0, 1));
+      //   this.gantt_end = new Date(this.gantt_end.setMonth(9, 1));
+      // }
     }
 
     setup_date_values() {
@@ -2581,7 +2581,7 @@ var Gantt = (function () {
             : '',
         Week_lower:
           date.getMonth() !== last_date.getMonth()
-            ? date_utils.format(date, 'D MMM', this.options.language)
+            ? date_utils.format(date, 'M月D日', this.options.language)
             : date_utils.format(date, 'D', this.options.language),
         Month_lower: date_utils.format(date, 'M月', this.options.language),
         'Quarter Year_lower':
@@ -2591,15 +2591,15 @@ var Gantt = (function () {
         Year_lower: date_utils.format(date, 'YYYY年', this.options.language),
         Hour_upper:
           date.getDate() !== last_date.getDate()
-            ? date_utils.format(date, 'D MMMM', this.options.language)
+            ? date_utils.format(date, 'MM月D日', this.options.language)
             : '',
         'Quarter Day_upper':
           date.getDate() !== last_date.getDate()
-            ? date_utils.format(date, 'D MMM', this.options.language)
+            ? date_utils.format(date, 'MM月D日', this.options.language)
             : '',
         'Half Day_upper':
           date.getDate() !== last_date.getDate()
-            ? date_utils.format(date, 'D MMM', this.options.language)
+            ? date_utils.format(date, 'MM月D日', this.options.language)
             : '',
         Day_upper:
           !last_date_info || date.getMonth() !== last_date.getMonth()
