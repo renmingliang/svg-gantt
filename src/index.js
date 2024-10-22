@@ -1,6 +1,7 @@
 import date_utils from './date_utils';
 import { $, createSVG } from './svg_utils';
 import { getLang, VIEW_MODE } from './lang_utils';
+import version from './version';
 import Bar from './bar';
 import Arrow from './arrow';
 import Popup from './popup';
@@ -57,6 +58,7 @@ const DEFAULT_OPTIONS = {
 
 export default class Gantt {
   constructor(wrapper, tasks, options) {
+    this.version = version;
     this.setup_wrapper(wrapper);
     this.setup_options(options);
     this.setup_tasks(tasks);
@@ -1990,6 +1992,8 @@ export default class Gantt {
 }
 
 Gantt.VIEW_MODE = VIEW_MODE;
+
+Gantt.VERSION = version;
 
 function generate_id(task) {
   return task.name + '_' + Math.random().toString(36).slice(2, 12);

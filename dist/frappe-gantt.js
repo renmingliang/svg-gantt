@@ -524,6 +524,8 @@ var Gantt = (function () {
     TODAY: "Today"
   };
 
+  const version = '1.0.0';
+
   class Bar {
     constructor(gantt, task) {
       this.set_defaults(gantt, task);
@@ -1424,6 +1426,7 @@ var Gantt = (function () {
 
   class Gantt {
     constructor(wrapper, tasks, options) {
+      this.version = version;
       this.setup_wrapper(wrapper);
       this.setup_options(options);
       this.setup_tasks(tasks);
@@ -3356,6 +3359,8 @@ var Gantt = (function () {
   }
 
   Gantt.VIEW_MODE = VIEW_MODE;
+
+  Gantt.VERSION = version;
 
   function generate_id(task) {
     return task.name + '_' + Math.random().toString(36).slice(2, 12);
