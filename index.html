@@ -31,15 +31,17 @@
       <h2 class="heading">Interactive Gantt Chart entirely made in SVG!</h2>
       <div class="gantt-target" style="height: 360px;"></div>
 
-      <button onclick="insertData()">插入一条数据</button>
-      <button onclick="deleteData()">删除一条数据</button>
-      <button onclick="updateData()">更新一条数据</button>
+      <button onclick="insertData()">队尾插入一条数据</button>
+      <button onclick="deleteData(1)">删除第二条数据</button>
+      <button onclick="updateData('Task_5')">更新id=Task_5数据</button>
+      <button onclick="togglePermission(true)">禁用权限</button>
+      <button onclick="togglePermission(false)">开启权限</button>
     </div>
     <script src="./const.js"></script>
      <!-- <script src="./issue.js"></script> -->
     <script>
 
-      let int = 6;
+      let int = tasks.length;
       function insertData() {
         const mock = {
           start: '2024-02-28 05:32:33',
@@ -49,15 +51,17 @@
           progress: 10,
           dependencies: 'Task 1, Task 2'
         }
+        gantt_chart.insert(mock, int);
         int += 1;
-        gantt_chart.insert(mock, 1);
       }
-      function deleteData() {
-        gantt_chart.remove(1);
+      function deleteData(num) {
+        gantt_chart.remove(num);
       }
-      function updateData() {
-        // gantt_chart.update({id: 'Task_5', start: '2024-07-20'});
-        gantt_chart.update({id: 'Task_5', end: '2024-07-10'});
+      function updateData(id) {
+        gantt_chart.update({id, start: '2024-07-01', end: '2024-07-10'});
+      }
+      function togglePermission(bool) {
+        gantt_chart.set_readonly(bool);
       }
 
       function init(list) {

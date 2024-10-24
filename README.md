@@ -36,8 +36,9 @@ If you want to contribute enhancements or fixes:
 6. today - scrollTo 日期1/3位置显示；
 7. 未设置开始时间 or 结束时间 -> 相应变更对于时间点 才更新；
 8. 无tasks数据时，空绘制；
+9. 动态权限控制，readonly；
+10. 拖拽超限 this.gantt_start 与 this.gantt_end，更新画布；
 
 ### TODO
-1. 拖拽超限 this.gantt_start 与 this.gantt_end，需更新画布；
-2. 点击创建Bar后，make_arrows可动态创建；
-3. date-change，事件回调日期格式化 hour，导致结束时间返回23:00:00；
+1. 点击创建Bar后，make_arrows可动态创建；
+2. date-change，事件回调日期格式化 hour，导致结束时间返回23:00:00；

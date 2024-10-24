@@ -1635,13 +1635,7 @@ var Gantt = (function () {
 
     update(task) {
       const original = this.get_task(task.id);
-      // new object
-      const current = Object.keys(original).reduce((result, key) => {
-        const val = task[key];
-        result[key] = val === undefined ? original[key] : val;
-        return result;
-      }, {});
-
+      const current = Object.assign({}, original, task);
       const update_task = this.format_task(current, original._index);
 
       // empty daterange
@@ -1657,28 +1651,33 @@ var Gantt = (function () {
       }
 
       // update task
+      this.tasks.splice(original._index, 1, update_task);
       const bar = this.get_bar(update_task.id);
       bar.update_bar_task(update_task);
-      this.tasks.splice(original._index, 1, update_task);
 
-      if (Number(original._start) !== Number(update_task._start)) {
-        // move-left
+      let move_x = bar.$bar.getX();
+      let move_w = bar.$bar.getWidth();
+
+      if (original._start !== update_task._start) {
+        // calculate-left
         const start_date = date_utils.parse(update_task._start);
         const dx = this.get_snap_distance(original._start, start_date);
-        bar.update_bar_position({
-          x: bar.$bar.getX() - dx,
-          width: bar.$bar.getWidth() + dx,
-        });
+        move_x -= dx;
+        move_w += dx;
       }
 
-      if (Number(original._end) !== Number(update_task._end)) {
-        // move-right
+      if (original._end !== update_task._end) {
+        // calculate-right
         const end_date = date_utils.parse(update_task._end);
         const dx = this.get_snap_distance(original._end, end_date);
-        bar.update_bar_position({
-          width: bar.$bar.getWidth() - dx,
-        });
+        move_w -= dx;
       }
+
+      // move
+      bar.update_bar_position({
+        x: move_x,
+        width: move_w,
+      });
     }
 
     remove(task) {
@@ -1954,12 +1953,6 @@ var Gantt = (function () {
         padding_end.scale,
       );
       this.gantt_end.setHours(0, 0, 0, 0);
-
-      // quarter_year start January end December
-      // if (this.view_is(VIEW_MODE.QUARTER_YEAR)) {
-      //   this.gantt_start = new Date(this.gantt_start.setMonth(0, 1));
-      //   this.gantt_end = new Date(this.gantt_end.setMonth(9, 1));
-      // }
     }
 
     setup_date_values() {
@@ -1972,10 +1965,10 @@ var Gantt = (function () {
         } else {
           if (this.view_is(VIEW_MODE.YEAR)) {
             cur_date = date_utils.add(cur_date, 1, 'year');
-          } else if (this.view_is(VIEW_MODE.MONTH)) {
-            cur_date = date_utils.add(cur_date, 1, 'month');
           } else if (this.view_is(VIEW_MODE.QUARTER_YEAR)) {
             cur_date = date_utils.add(cur_date, 3, 'month');
+          } else if (this.view_is(VIEW_MODE.MONTH)) {
+            cur_date = date_utils.add(cur_date, 1, 'month');
           } else {
             cur_date = date_utils.add(cur_date, this.options.step, 'hour');
           }
@@ -1991,7 +1984,6 @@ var Gantt = (function () {
           date_utils.add(start, -1, 'day').setHours(0, 0, 0, 0),
         );
         const left_dates = this.get_left_dates(new_gantt_start, this.old_gantt_start);
-        console.log('ddd ==> gantt_update left_dates', left_dates);
         this.gantt_start = left_dates[0];
 
         const dx = this.get_snap_distance(this.old_gantt_start, this.gantt_start);
@@ -2039,10 +2031,10 @@ var Gantt = (function () {
       while (start_temp > start) {
         if (this.view_is(VIEW_MODE.YEAR)) {
           start_temp = date_utils.add(start_temp, -1, 'year');
-        } else if (this.view_is(VIEW_MODE.MONTH)) {
-          start_temp = date_utils.add(start_temp, -1, 'month');
         } else if (this.view_is(VIEW_MODE.QUARTER_YEAR)) {
           start_temp = date_utils.add(start_temp, -3, 'month');
+        } else if (this.view_is(VIEW_MODE.MONTH)) {
+          start_temp = date_utils.add(start_temp, -1, 'month');
         } else {
           start_temp = date_utils.add(start_temp, -this.options.step, 'hour');
         }
@@ -2056,7 +2048,6 @@ var Gantt = (function () {
     update_gantt_right() {
       const initial_date = this.last_date_info.date;
       const right_dates = this.get_right_dates(initial_date, this.gantt_end);
-      console.log('ddd ==> gantt_update right_dates', right_dates);
       // 日期
       this.get_dates_to_draw(right_dates, this.last_date_info).forEach(
         (date, i) => {
@@ -2080,10 +2071,10 @@ var Gantt = (function () {
       while (start_temp < end) {
         if (this.view_is(VIEW_MODE.YEAR)) {
           start_temp = date_utils.add(start_temp, 1, 'year');
-        } else if (this.view_is(VIEW_MODE.MONTH)) {
-          start_temp = date_utils.add(start_temp, 1, 'month');
         } else if (this.view_is(VIEW_MODE.QUARTER_YEAR)) {
           start_temp = date_utils.add(start_temp, 3, 'month');
+        } else if (this.view_is(VIEW_MODE.MONTH)) {
+          start_temp = date_utils.add(start_temp, 1, 'month');
         } else {
           start_temp = date_utils.add(start_temp, this.options.step, 'hour');
         }
@@ -2154,6 +2145,10 @@ var Gantt = (function () {
         if (bar.empty) return;
         bar.update_bar_position({ x: bar.$bar.getX() + dx });
       });
+    }
+
+    set_readonly(bool) {
+      this.options.readonly = bool;
     }
 
     bind_events() {
@@ -2651,7 +2646,7 @@ var Gantt = (function () {
         'Half Day_upper': (column_width * 2) / 2,
         Day_lower: column_width / 2,
         Day_upper: column_width / 2,
-        Week_lower: column_width / 2,
+        Week_lower: 0,
         Week_upper: 19,
         Month_lower: column_width / 2,
         Month_upper: 19,
@@ -2696,8 +2691,9 @@ var Gantt = (function () {
         append_to: this.$lower_header,
       });
       $lower_text.innerText = date.lower_text;
-      $lower_text.style.left =
-        +$lower_text.style.left.slice(0, -2) - $lower_text.clientWidth / 2 + 'px';
+      if (!this.view_is(VIEW_MODE.WEEK)) {
+        $lower_text.style.left = +$lower_text.style.left.slice(0, -2) - $lower_text.clientWidth / 2 + 'px';
+      }
 
       if (date.upper_text) {
         if (this.upper_texts_x[date.upper_text] === undefined) {
@@ -2930,7 +2926,11 @@ var Gantt = (function () {
           // remove holder dom
           this.layers.progress.removeChild(holder);
           // trigger event
-          this.trigger_event('date_change', [matched_task, date_start, date_end]);
+          this.trigger_event('date_change', [
+            matched_task,
+            date_start,
+            date_utils.add(date_end, -1, 'second'),
+          ]);
         }
         holder = null;
       });
