@@ -734,8 +734,6 @@ var Gantt = (function () {
     }
 
     draw_resize_handles() {
-      if (this.gantt.options.readonly) return;
-
       const bar = this.$bar;
       const handle_width = this.gantt.options.handle_width;
 
@@ -775,9 +773,9 @@ var Gantt = (function () {
     get_progress_polygon_points() {
       const bar_progress = this.$bar_progress;
       if (!bar_progress) return [];
-      let icon_width = 10;
-      let icon_height = 15;
 
+      const icon_width = 10;
+      const icon_height = 15;
       return [
         bar_progress.getEndX() - icon_width / 2,
         bar_progress.getY() + bar_progress.getHeight() / 2,
@@ -936,12 +934,11 @@ var Gantt = (function () {
         }
 
         this.update_attr(bar, "x", x);
-        if (this.$date_highlight) this.$date_highlight.style.left = x + 'px';
       }
-      if (width) {
+      if (width != undefined) {
         this.update_attr(bar, "width", width);
-        if (this.$date_highlight) this.$date_highlight.style.width = width + 'px';
       }
+
       this.update_label_position();
       this.update_handle_position();
       if (this.gantt.options.show_expected_progress) {
@@ -999,12 +996,6 @@ var Gantt = (function () {
 
       if (!changed) return;
 
-      if (this.invalid) {
-        this.invalid = false;
-        this.task.invalid = false;
-        this.$bar.classList.remove('bar-invalid');
-      }
-
       this.gantt.trigger_event("date_change", [
         this.task,
         new_start_date,
@@ -1034,8 +1025,8 @@ var Gantt = (function () {
     }
 
     compute_progress() {
-      const progress =
-        (this.$bar_progress.getWidth() / this.$bar.getWidth()) * 100;
+      const bar_progress_width = this.$bar_progress ? this.$bar_progress.getWidth() : 0;
+      const progress = (bar_progress_width / this.$bar.getWidth()) * 100;
       return parseInt(progress, 10);
     }
 
@@ -1093,24 +1084,20 @@ var Gantt = (function () {
       if (!this.$expected_bar_progress) return;
 
       this.$expected_bar_progress.setAttribute("x", this.$bar.getX());
-      this.compute_expected_progress();
-      this.$expected_bar_progress.setAttribute(
-        "width",
-        this.gantt.options.column_width *
-        this.duration *
-        (this.expected_progress / 100) || 0,
-      );
+
+      this.prepare_expected_progress_values();
+      this.$expected_bar_progress.setAttribute("width", this.expected_progress_width);
     }
 
     update_progressbar_position() {
-      if (this.gantt.options.readonly) return;
-      if (!this.$bar_progress) return;
-
-      this.$bar_progress.setAttribute("x", this.$bar.getX());
-      this.$bar_progress.setAttribute(
-        "width",
-        this.$bar.getWidth() * (this.task.progress / 100),
-      );
+      const bar_progress = this.$bar_progress;
+      if (bar_progress) {
+        bar_progress.setAttribute('x', this.$bar.getX());
+        bar_progress.setAttribute(
+          'width',
+          this.$bar.getWidth() * (this.task.progress / 100),
+        );
+      }
 
       const $handle = this.$handle_progress;
       if ($handle) {
@@ -1151,16 +1138,17 @@ var Gantt = (function () {
     }
 
     update_handle_position() {
-      if (this.gantt.options.readonly) return;
       const bar = this.$bar;
       const handle_width = this.gantt.options.handle_width;
 
-      this.handle_group
-        .querySelector(".handle.left")
-        .setAttribute("x", bar.getX() + 1);
-      this.handle_group
-        .querySelector(".handle.right")
-        .setAttribute("x", bar.getEndX() - handle_width - 1);
+      const $handle_left = this.handle_group.querySelector(".handle.left");
+      if ($handle_left) {
+        $handle_left.setAttribute('x', bar.getX() + 1);
+      }
+      const $handle_right = this.handle_group.querySelector(".handle.right");
+      if ($handle_right) {
+        $handle_right.setAttribute('x', bar.getEndX() - handle_width - 1);
+      }
     }
 
     update_arrow_position() {
@@ -1439,10 +1427,10 @@ var Gantt = (function () {
   class Gantt {
     constructor(wrapper, tasks, options) {
       this.version = version;
-      this.setup_wrapper(wrapper);
       this.setup_options(options);
+      this.setup_wrapper(wrapper);
+
       this.setup_tasks(tasks);
-      // initialize with default view mode
       this.change_view_mode();
       this.bind_events();
     }
@@ -1478,6 +1466,10 @@ var Gantt = (function () {
       } else {
         this.$svg = svg_element;
         this.$svg.classList.add('gantt');
+      }
+
+      if (this.options.readonly) {
+        this.$svg.classList.add('disabled');
       }
 
       // container element
@@ -3076,7 +3068,6 @@ var Gantt = (function () {
 
           // calculate start_date end_date
           const { new_start_date, new_end_date } = bar.compute_start_end_date();
-
           const date_start = new Date(date_utils.clone(new_start_date).setHours(0, 0, 0, 0));
           const dx_start = this.get_snap_distance(date_start, this.gantt_start);
 
@@ -3107,6 +3098,11 @@ var Gantt = (function () {
               start: date_start,
               end: date_end,
             });
+          }
+
+          if (bar.task.invalid) {
+            const new_task = Object.assign({}, bar.task, { invalid: false });
+            this.replace(new_task, bar.task);
           }
 
           $bar.finaldx = 0;

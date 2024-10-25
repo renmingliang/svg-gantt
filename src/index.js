@@ -59,10 +59,10 @@ const DEFAULT_OPTIONS = {
 export default class Gantt {
   constructor(wrapper, tasks, options) {
     this.version = version;
-    this.setup_wrapper(wrapper);
     this.setup_options(options);
+    this.setup_wrapper(wrapper);
+
     this.setup_tasks(tasks);
-    // initialize with default view mode
     this.change_view_mode();
     this.bind_events();
   }
@@ -98,6 +98,10 @@ export default class Gantt {
     } else {
       this.$svg = svg_element;
       this.$svg.classList.add('gantt');
+    }
+
+    if (this.options.readonly) {
+      this.$svg.classList.add('disabled');
     }
 
     // container element
@@ -1697,7 +1701,6 @@ export default class Gantt {
 
         // calculate start_date end_date
         const { new_start_date, new_end_date } = bar.compute_start_end_date();
-
         const date_start = new Date(date_utils.clone(new_start_date).setHours(0, 0, 0, 0));
         const dx_start = this.get_snap_distance(date_start, this.gantt_start);
 
@@ -1728,6 +1731,11 @@ export default class Gantt {
             start: date_start,
             end: date_end,
           });
+        }
+
+        if (bar.task.invalid) {
+          const new_task = Object.assign({}, bar.task, { invalid: false });
+          this.replace(new_task, bar.task);
         }
 
         $bar.finaldx = 0;
