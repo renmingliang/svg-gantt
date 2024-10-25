@@ -781,12 +781,16 @@ export default class Gantt {
 
   set_readonly(bool) {
     this.options.readonly = bool;
+    if (bool) {
+      this.$svg.classList.add('disabled');
+    } else {
+      this.$svg.classList.remove('disabled');
+    }
   }
 
   bind_events() {
     this.bind_grid_scroll();
 
-    if (this.options.readonly) return;
     this.bind_grid_click();
     this.bind_bar_create();
     this.bind_bar_events();
@@ -1480,6 +1484,8 @@ export default class Gantt {
     const row_height = bar_height + this.options.padding;
 
     $.on(this.$svg, 'mousedown', (e) => {
+      if (this.options.readonly) return;
+
       // location
       const index = parseInt(e.offsetY / row_height);
       matched_task = this.tasks[index];
@@ -1589,6 +1595,8 @@ export default class Gantt {
     }
 
     $.on(this.$svg, 'mousedown', '.bar-wrapper, .handle', (e, element) => {
+      if (this.options.readonly) return;
+
       const bar_wrapper = $.closest('.bar-wrapper', element);
       bars.forEach((bar) => bar.group.classList.remove('active'));
 
@@ -1812,6 +1820,8 @@ export default class Gantt {
     let $bar = null;
 
     $.on(this.$svg, 'mousedown', '.handle.progress', (e, handle) => {
+      if (this.options.readonly) return;
+
       is_resizing = true;
       x_on_start = e.offsetX;
       y_on_start = e.offsetY;

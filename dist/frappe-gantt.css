@@ -244,10 +244,6 @@
   cursor: pointer;
   outline: none;
 }
-.gantt .bar-wrapper.active .handle, .gantt .bar-wrapper:hover .handle {
-  visibility: visible;
-  opacity: 1;
-}
 .gantt .bar-wrapper .bar-inner {
   -webkit-filter: drop-shadow(3px 3px 2px rgba(0, 0, 0, 0.7));
   filter: drop-shadow(0 0 2px rgba(17, 43, 66, 0.16));
@@ -258,6 +254,10 @@
 }
 .gantt .bar-wrapper:hover .date-highlight {
   display: block;
+}
+.gantt:not(.disabled) .bar-wrapper.active .handle, .gantt:not(.disabled) .bar-wrapper:hover .handle {
+  visibility: visible;
+  opacity: 1;
 }
 
 .gantt-popup-wrapper {

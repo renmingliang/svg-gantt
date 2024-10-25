@@ -344,12 +344,24 @@ export default class Bar {
   }
 
   update_bar_task(task) {
+    const old_task = this.task;
     this.action_completed = false;
     this.task = task;
     this.prepare_values();
 
-    const label = this.bar_group.querySelector('.bar-label')
-    if(label) label.innerHTML = task.name;
+    if (old_task.name !== task.name) {
+      const label = this.bar_group.querySelector('.bar-label')
+      if(label) label.innerHTML = task.name;
+    }
+
+    let cls = 'bar-wrapper';
+    if (task.custom_class) {
+      cls += ' ' + task.custom_class;
+    }
+    if (task.important) {
+      cls += ' important';
+    }
+    $.attr(this.group, 'class', cls);
   }
 
   update_bar_vertical({ offset }) {

@@ -254,13 +254,6 @@ $handle-color: #dcdce4 !default;
     cursor: pointer;
     outline: none;
 
-    &.active, &:hover {
-      & .handle {
-        visibility: visible;
-        opacity: 1;
-      }
-    }
-
     .bar-inner {
       -webkit-filter: drop-shadow(3px 3px 2px rgba(0, 0, 0, .7));
       filter: drop-shadow(0 0 2px rgba(17, 43, 66, .16));
@@ -274,6 +267,17 @@ $handle-color: #dcdce4 !default;
 
       .date-highlight {
         display: block;
+      }
+    }
+  }
+
+  &:not(.disabled) {
+    .bar-wrapper {
+      &.active, &:hover {
+        & .handle {
+          visibility: visible;
+          opacity: 1;
+        }
       }
     }
   }

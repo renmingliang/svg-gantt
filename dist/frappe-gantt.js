@@ -868,12 +868,24 @@ var Gantt = (function () {
     }
 
     update_bar_task(task) {
+      const old_task = this.task;
       this.action_completed = false;
       this.task = task;
       this.prepare_values();
 
-      const label = this.bar_group.querySelector('.bar-label');
-      if(label) label.innerHTML = task.name;
+      if (old_task.name !== task.name) {
+        const label = this.bar_group.querySelector('.bar-label');
+        if(label) label.innerHTML = task.name;
+      }
+
+      let cls = 'bar-wrapper';
+      if (task.custom_class) {
+        cls += ' ' + task.custom_class;
+      }
+      if (task.important) {
+        cls += ' important';
+      }
+      $.attr(this.group, 'class', cls);
     }
 
     update_bar_vertical({ offset }) {
@@ -2149,12 +2161,16 @@ var Gantt = (function () {
 
     set_readonly(bool) {
       this.options.readonly = bool;
+      if (bool) {
+        this.$svg.classList.add('disabled');
+      } else {
+        this.$svg.classList.remove('disabled');
+      }
     }
 
     bind_events() {
       this.bind_grid_scroll();
 
-      if (this.options.readonly) return;
       this.bind_grid_click();
       this.bind_bar_create();
       this.bind_bar_events();
@@ -2847,6 +2863,8 @@ var Gantt = (function () {
       const row_height = bar_height + this.options.padding;
 
       $.on(this.$svg, 'mousedown', (e) => {
+        if (this.options.readonly) return;
+
         // location
         const index = parseInt(e.offsetY / row_height);
         matched_task = this.tasks[index];
@@ -2956,6 +2974,8 @@ var Gantt = (function () {
       }
 
       $.on(this.$svg, 'mousedown', '.bar-wrapper, .handle', (e, element) => {
+        if (this.options.readonly) return;
+
         const bar_wrapper = $.closest('.bar-wrapper', element);
         bars.forEach((bar) => bar.group.classList.remove('active'));
 
@@ -3179,6 +3199,8 @@ var Gantt = (function () {
       let $bar = null;
 
       $.on(this.$svg, 'mousedown', '.handle.progress', (e, handle) => {
+        if (this.options.readonly) return;
+
         is_resizing = true;
         x_on_start = e.offsetX;
         y_on_start = e.offsetY;
