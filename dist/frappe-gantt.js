@@ -3100,14 +3100,14 @@ var Gantt = (function () {
             });
           }
 
+          $bar.finaldx = 0;
+          bar.date_changed();
+          bar.set_action_completed();
+
           if (bar.task.invalid) {
             const new_task = Object.assign({}, bar.task, { invalid: false });
             this.replace(new_task, bar.task);
           }
-
-          $bar.finaldx = 0;
-          bar.date_changed();
-          bar.set_action_completed();
         });
       });
 
