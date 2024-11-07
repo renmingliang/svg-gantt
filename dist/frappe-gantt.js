@@ -1617,12 +1617,19 @@ var Gantt = (function () {
       // uids
       if (!task.id) {
         task.id = generate_id(task);
-      } else if (typeof task.id === 'string') {
-        task.id = task.id.replaceAll(' ', '_');
       } else {
-        task.id = `${task.id}`;
+        task.id = this.format_task_id(task);
       }
+
       return task;
+    }
+
+    format_task_id(task) {
+      if (typeof task.id === 'string') {
+        return task.id.replaceAll(' ', '_');
+      } else {
+        return task.id;
+      }
     }
 
     format_dependency(task) {
@@ -1638,7 +1645,9 @@ var Gantt = (function () {
     }
 
     update(task) {
+      task.id = this.format_task_id(task);
       const original = this.get_task(task.id);
+      if (!original) return;
       const current = Object.assign({}, original, task);
       const update_task = this.format_task(current, original._index);
 
@@ -1687,7 +1696,7 @@ var Gantt = (function () {
     remove(task) {
       let index = null;
       if (typeof task === 'object') {
-        const tid = `${task.id}`.replaceAll(' ', '_');
+        const tid = this.format_task_id(task);
         index = this.tasks.findIndex((item) => item.id === tid);
       } else {
         index = task;
@@ -1733,7 +1742,8 @@ var Gantt = (function () {
       if (index === undefined) {
         target = this.tasks.length; // default end
       } else if (typeof index === 'object') {
-        target = this.tasks.findIndex((task) => task.id === index.id);
+        const tid = this.format_task_id(index.id);
+        target = this.tasks.findIndex((task) => task.id === tid);
         target += 1; // target task
       } else {
         target = index; // target index
@@ -1987,7 +1997,10 @@ var Gantt = (function () {
         const new_gantt_start = new Date(
           date_utils.add(start, -1, 'day').setHours(0, 0, 0, 0),
         );
-        const left_dates = this.get_left_dates(new_gantt_start, this.old_gantt_start);
+        const left_dates = this.get_left_dates(
+          new_gantt_start,
+          this.old_gantt_start,
+        );
         this.gantt_start = left_dates[0];
 
         const dx = this.get_snap_distance(this.old_gantt_start, this.gantt_start);
@@ -2700,7 +2713,10 @@ var Gantt = (function () {
       });
       $lower_text.innerText = date.lower_text;
       if (!this.view_is(VIEW_MODE.WEEK)) {
-        $lower_text.style.left = +$lower_text.style.left.slice(0, -2) - $lower_text.clientWidth / 2 + 'px';
+        $lower_text.style.left =
+          +$lower_text.style.left.slice(0, -2) -
+          $lower_text.clientWidth / 2 +
+          'px';
       }
 
       if (date.upper_text) {
@@ -3019,7 +3035,7 @@ var Gantt = (function () {
           this.hide_popup();
           if (is_resizing_left) {
             if ($bar.finaldx - $bar.owidth + handle_width >= 0) return;
-            if (parent_bar_id === bar.task.id) {
+            if (parent_bar_id == bar.task.id) {
               bar.update_bar_position({
                 x: $bar.ox + $bar.finaldx,
                 width: $bar.owidth - $bar.finaldx,
@@ -3031,7 +3047,7 @@ var Gantt = (function () {
             }
           } else if (is_resizing_right) {
             if ($bar.finaldx + $bar.owidth < handle_width) return;
-            if (parent_bar_id === bar.task.id) {
+            if (parent_bar_id == bar.task.id) {
               bar.update_bar_position({
                 width: $bar.owidth + $bar.finaldx,
               });
@@ -3041,7 +3057,7 @@ var Gantt = (function () {
           }
 
           // show drag_backdrop
-          if (parent_bar_id === bar.task.id) {
+          if (parent_bar_id == bar.task.id) {
             let x = 0;
             const scrollLeft = this.$container_main.scrollLeft;
             if (is_resizing_right) {
@@ -3068,10 +3084,14 @@ var Gantt = (function () {
 
           // calculate start_date end_date
           const { new_start_date, new_end_date } = bar.compute_start_end_date();
-          const date_start = new Date(date_utils.clone(new_start_date).setHours(0, 0, 0, 0));
+          const date_start = new Date(
+            date_utils.clone(new_start_date).setHours(0, 0, 0, 0),
+          );
           const dx_start = this.get_snap_distance(date_start, this.gantt_start);
 
-          let date_end = new Date(date_utils.clone(new_end_date).setHours(0, 0, 0, 0));
+          let date_end = new Date(
+            date_utils.clone(new_end_date).setHours(0, 0, 0, 0),
+          );
           if (new_end_date > date_end) {
             date_end = date_utils.add(date_end, 1, 'day');
           }
@@ -3313,15 +3333,11 @@ var Gantt = (function () {
     }
 
     get_task(id) {
-      return this.tasks.find((task) => {
-        return task.id === id;
-      });
+      return this.tasks.find((task) => task.id == id);
     }
 
     get_bar(id) {
-      return this.bars.find((bar) => {
-        return bar.task.id === id;
-      });
+      return this.bars.find((bar) => bar.task.id == id);
     }
 
     show_backdrop({ x, width, bar }) {
