@@ -3002,11 +3002,13 @@ var Gantt = (function () {
         y_on_start = e.offsetY;
 
         parent_bar_id = bar_wrapper.getAttribute('data-id');
-        const ids = [parent_bar_id];
+        let ids = [parent_bar_id];
         // drag sync children
         if (this.options.drag_sync_child) {
           ids.push(...this.get_all_dependent_tasks(parent_bar_id));
+          ids = ids.filter((id, ix) => ids.indexOf(id) === ix);
         }
+
         bars = ids.map((id) => this.get_bar(id));
 
         this.bar_being_dragged = parent_bar_id;
