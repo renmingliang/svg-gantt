@@ -12,7 +12,7 @@ export default class Arrow {
   }
 
   calculate_path() {
-    if (this.from_task.empty || this.to_task.empty) return;
+    if (this.from_task._empty || this.to_task._empty) return;
 
     const rowHeight = this.gantt.options.bar_height + this.gantt.options.padding;
     const taskHeight = this.gantt.options.bar_height;
@@ -56,13 +56,13 @@ export default class Arrow {
 
   draw() {
     this.element = createSVG("g", {
-      "data-from": this.from_task.task.id,
-      "data-to": this.to_task.task.id,
+      "data-from": this.from_task.task._id,
+      "data-to": this.to_task.task._id,
     });
   }
 
   drawInner() {
-    if (this.from_task.empty || this.to_task.empty) return;
+    if (this.from_task._empty || this.to_task._empty) return;
 
     this.svgPath = createSVG("path", {
       d: this.path,
@@ -76,7 +76,7 @@ export default class Arrow {
   }
 
   update() {
-    if (this.from_task.empty || this.to_task.empty) return;
+    if (this.from_task._empty || this.to_task._empty) return;
 
     this.calculate_path();
     this.svgPath.setAttribute("d", this.path);

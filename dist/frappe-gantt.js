@@ -549,7 +549,7 @@ var Gantt = (function () {
     prepare_doms() {
       this.group = createSVG("g", {
         class: "bar-wrapper" + (this.task.custom_class ? " " + this.task.custom_class : "") + (this.task.important ? ' important' : ''),
-        "data-id": this.task.id,
+        "data-id": this.task._id,
       });
       this.bar_group = createSVG("g", {
         class: "bar-group",
@@ -562,8 +562,8 @@ var Gantt = (function () {
     }
 
     prepare_values() {
-      this.empty = this.task.empty;
-      this.invalid = this.task.invalid;
+      this.empty = this.task._empty;
+      this.invalid = this.task._invalid;
       this.height = this.gantt.options.bar_height;
       this.image_size = this.height - 5;
       this.compute_x();
@@ -574,7 +574,7 @@ var Gantt = (function () {
       this.progress_width =
         this.gantt.options.column_width *
         this.duration *
-        (this.task.progress / 100) || 0;
+        (this.task._progress / 100) || 0;
     }
 
     prepare_helpers() {
@@ -633,13 +633,13 @@ var Gantt = (function () {
 
       animateSVG(this.$bar, "width", 0, this.width);
 
-      if (this.invalid) {
+      if (this._invalid) {
         this.$bar.classList.add("bar-invalid");
       }
     }
 
     draw_expected_progress_bar() {
-      if (this.invalid) return;
+      if (this._invalid) return;
       this.$expected_bar_progress = createSVG("rect", {
         x: this.x,
         y: this.y,
@@ -660,7 +660,7 @@ var Gantt = (function () {
     }
 
     draw_progress_bar() {
-      if (this.invalid) return;
+      if (this._invalid) return;
       this.$bar_progress = createSVG("rect", {
         x: this.x,
         y: this.y,
@@ -701,7 +701,7 @@ var Gantt = (function () {
       });
 
       createSVG('rect', {
-        id: 'rect_' + this.task.id,
+        id: 'rect_' + this.task._id,
         x: this.x + x_offset,
         y: this.y + y_offset,
         width: this.image_size,
@@ -712,12 +712,12 @@ var Gantt = (function () {
       });
 
       clipPath = createSVG('clipPath', {
-        id: 'clip_' + this.task.id,
+        id: 'clip_' + this.task._id,
         append_to: defs
       });
 
       createSVG('use', {
-        href: '#rect_' + this.task.id,
+        href: '#rect_' + this.task._id,
         append_to: clipPath
       });
 
@@ -728,7 +728,7 @@ var Gantt = (function () {
         height: this.image_size,
         class: 'bar-img',
         href: this.task.thumbnail,
-        clipPath: 'clip_' + this.task.id,
+        clipPath: 'clip_' + this.task._id,
         append_to: this.bar_group
       });
     }
@@ -898,7 +898,7 @@ var Gantt = (function () {
       });
       // update-thumbnail
       if (this.task.thumbnail) {
-        const $thumbnail = this.bar_group.querySelector('#rect_' + this.task.id);
+        const $thumbnail = this.bar_group.querySelector('#rect_' + this.task._id);
         const y = $.attr($thumbnail, 'y') * 1;
         $thumbnail.setAttribute('y', y + offset);
       }
@@ -1171,7 +1171,7 @@ var Gantt = (function () {
     }
 
     calculate_path() {
-      if (this.from_task.empty || this.to_task.empty) return;
+      if (this.from_task._empty || this.to_task._empty) return;
 
       const rowHeight = this.gantt.options.bar_height + this.gantt.options.padding;
       const taskHeight = this.gantt.options.bar_height;
@@ -1215,13 +1215,13 @@ var Gantt = (function () {
 
     draw() {
       this.element = createSVG("g", {
-        "data-from": this.from_task.task.id,
-        "data-to": this.to_task.task.id,
+        "data-from": this.from_task.task._id,
+        "data-to": this.to_task.task._id,
       });
     }
 
     drawInner() {
-      if (this.from_task.empty || this.to_task.empty) return;
+      if (this.from_task._empty || this.to_task._empty) return;
 
       this.svgPath = createSVG("path", {
         d: this.path,
@@ -1235,7 +1235,7 @@ var Gantt = (function () {
     }
 
     update() {
-      if (this.from_task.empty || this.to_task.empty) return;
+      if (this.from_task._empty || this.to_task._empty) return;
 
       this.calculate_path();
       this.svgPath.setAttribute("d", this.path);
@@ -1541,8 +1541,8 @@ var Gantt = (function () {
 
     format_task(task, i) {
       // reset symbol
-      task.empty = false;
-      task.invalid = false;
+      task._empty = false;
+      task._invalid = false;
       task.progress = task.progress || 0;
 
       // convert to Date objects
@@ -1573,16 +1573,16 @@ var Gantt = (function () {
 
       // invalid flag
       if (!task.start) {
-        task.invalid = 'start';
+        task._invalid = 'start';
       }
       if (!task.end) {
-        task.invalid = 'end';
+        task._invalid = 'end';
       }
       if (!task.start && !task.end) {
         task._start = null;
         task._end = null;
-        task.empty = true;
-        task.invalid = true;
+        task._empty = true;
+        task._invalid = true;
       }
 
       // mock daterange
@@ -1616,9 +1616,9 @@ var Gantt = (function () {
 
       // uids
       if (!task.id) {
-        task.id = generate_id(task);
+        task._id = generate_id(task);
       } else {
-        task.id = this.format_task_id(task);
+        task._id = this.format_task_id(task);
       }
 
       return task;
@@ -1635,7 +1635,7 @@ var Gantt = (function () {
     format_dependency(task) {
       for (let d of task.dependencies) {
         this.dependency_map[d] = this.dependency_map[d] || [];
-        this.dependency_map[d].push(task.id);
+        this.dependency_map[d].push(task._id);
       }
     }
 
@@ -1645,27 +1645,27 @@ var Gantt = (function () {
     }
 
     update(task) {
-      task.id = this.format_task_id(task);
-      const original = this.get_task(task.id);
+      task._id = this.format_task_id(task);
+      const original = this.get_task(task._id);
       if (!original) return;
       const current = Object.assign({}, original, task);
       const update_task = this.format_task(current, original._index);
 
       // empty daterange
-      if (original.empty || update_task.empty) {
+      if (original._empty || update_task._empty) {
         this.replace(update_task, original);
         return;
       }
 
       // invalid daterange
-      if (original.invalid !== update_task.invalid) {
+      if (original._invalid !== update_task._invalid) {
         this.replace(update_task, original);
         return;
       }
 
       // update task
       this.tasks.splice(original._index, 1, update_task);
-      const bar = this.get_bar(update_task.id);
+      const bar = this.get_bar(update_task._id);
       bar.update_bar_task(update_task);
 
       let move_x = bar.$bar.getX();
@@ -1697,7 +1697,7 @@ var Gantt = (function () {
       let index = null;
       if (typeof task === 'object') {
         const tid = this.format_task_id(task);
-        index = this.tasks.findIndex((item) => item.id === tid);
+        index = this.tasks.findIndex((item) => item._id === tid);
       } else {
         index = task;
       }
@@ -1743,7 +1743,7 @@ var Gantt = (function () {
         target = this.tasks.length; // default end
       } else if (typeof index === 'object') {
         const tid = this.format_task_id(index);
-        target = this.tasks.findIndex((task) => task.id === tid);
+        target = this.tasks.findIndex((task) => task._id === tid);
         target += 1; // target task
       } else {
         target = index; // target index
@@ -2783,8 +2783,8 @@ var Gantt = (function () {
       for (let bar of this.bars) {
         bar.arrows = this.arrows.filter((arrow) => {
           return (
-            arrow.from_task.task.id === bar.task.id ||
-            arrow.to_task.task.id === bar.task.id
+            arrow.from_task.task._id === bar.task._id ||
+            arrow.to_task.task._id === bar.task._id
           );
         });
       }
@@ -2877,9 +2877,9 @@ var Gantt = (function () {
         const index = parseInt(e.offsetY / row_height);
         matched_task = this.tasks[index];
         // only empty date
-        if (!matched_task || (matched_task && matched_task.empty !== true))
+        if (!matched_task || (matched_task && matched_task._empty !== true))
           return;
-        this.bar_being_created = matched_task.id;
+        this.bar_being_created = matched_task._id;
         // start record
         is_creating = true;
         x_on_start = e.offsetX;
@@ -2944,8 +2944,8 @@ var Gantt = (function () {
             _start: date_start,
             end: date_end,
             _end: date_end,
-            empty: false,
-            invalid: false,
+            _empty: false,
+            _invalid: false,
           });
           this.replace(update_task, matched_task);
 
@@ -3036,7 +3036,7 @@ var Gantt = (function () {
           this.hide_popup();
           if (is_resizing_left) {
             if ($bar.finaldx - $bar.owidth + handle_width >= 0) return;
-            if (parent_bar_id == bar.task.id) {
+            if (parent_bar_id == bar.task._id) {
               bar.update_bar_position({
                 x: $bar.ox + $bar.finaldx,
                 width: $bar.owidth - $bar.finaldx,
@@ -3048,7 +3048,7 @@ var Gantt = (function () {
             }
           } else if (is_resizing_right) {
             if ($bar.finaldx + $bar.owidth < handle_width) return;
-            if (parent_bar_id == bar.task.id) {
+            if (parent_bar_id == bar.task._id) {
               bar.update_bar_position({
                 width: $bar.owidth + $bar.finaldx,
               });
@@ -3058,7 +3058,7 @@ var Gantt = (function () {
           }
 
           // show drag_backdrop
-          if (parent_bar_id == bar.task.id) {
+          if (parent_bar_id == bar.task._id) {
             let x = 0;
             const scrollLeft = this.$container_main.scrollLeft;
             if (is_resizing_right) {
@@ -3125,8 +3125,8 @@ var Gantt = (function () {
           bar.date_changed();
           bar.set_action_completed();
 
-          if (bar.task.invalid) {
-            const new_task = Object.assign({}, bar.task, { invalid: false });
+          if (bar.invalid) {
+            const new_task = Object.assign({}, bar.task, { _invalid: false });
             this.replace(new_task, bar.task);
           }
         });
@@ -3334,11 +3334,11 @@ var Gantt = (function () {
     }
 
     get_task(id) {
-      return this.tasks.find((task) => task.id == id);
+      return this.tasks.find((task) => task._id == id);
     }
 
     get_bar(id) {
-      return this.bars.find((bar) => bar.task.id == id);
+      return this.bars.find((bar) => bar.task._id == id);
     }
 
     show_backdrop({ x, width, bar }) {

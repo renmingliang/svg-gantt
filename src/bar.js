@@ -25,7 +25,7 @@ export default class Bar {
   prepare_doms() {
     this.group = createSVG("g", {
       class: "bar-wrapper" + (this.task.custom_class ? " " + this.task.custom_class : "") + (this.task.important ? ' important' : ''),
-      "data-id": this.task.id,
+      "data-id": this.task._id,
     });
     this.bar_group = createSVG("g", {
       class: "bar-group",
@@ -38,8 +38,8 @@ export default class Bar {
   }
 
   prepare_values() {
-    this.empty = this.task.empty;
-    this.invalid = this.task.invalid;
+    this.empty = this.task._empty;
+    this.invalid = this.task._invalid;
     this.height = this.gantt.options.bar_height;
     this.image_size = this.height - 5;
     this.compute_x();
@@ -50,7 +50,7 @@ export default class Bar {
     this.progress_width =
       this.gantt.options.column_width *
       this.duration *
-      (this.task.progress / 100) || 0;
+      (this.task._progress / 100) || 0;
   }
 
   prepare_helpers() {
@@ -109,13 +109,13 @@ export default class Bar {
 
     animateSVG(this.$bar, "width", 0, this.width);
 
-    if (this.invalid) {
+    if (this._invalid) {
       this.$bar.classList.add("bar-invalid");
     }
   }
 
   draw_expected_progress_bar() {
-    if (this.invalid) return;
+    if (this._invalid) return;
     this.$expected_bar_progress = createSVG("rect", {
       x: this.x,
       y: this.y,
@@ -136,7 +136,7 @@ export default class Bar {
   }
 
   draw_progress_bar() {
-    if (this.invalid) return;
+    if (this._invalid) return;
     this.$bar_progress = createSVG("rect", {
       x: this.x,
       y: this.y,
@@ -177,7 +177,7 @@ export default class Bar {
     });
 
     createSVG('rect', {
-      id: 'rect_' + this.task.id,
+      id: 'rect_' + this.task._id,
       x: this.x + x_offset,
       y: this.y + y_offset,
       width: this.image_size,
@@ -188,12 +188,12 @@ export default class Bar {
     });
 
     clipPath = createSVG('clipPath', {
-      id: 'clip_' + this.task.id,
+      id: 'clip_' + this.task._id,
       append_to: defs
     });
 
     createSVG('use', {
-      href: '#rect_' + this.task.id,
+      href: '#rect_' + this.task._id,
       append_to: clipPath
     });
 
@@ -204,7 +204,7 @@ export default class Bar {
       height: this.image_size,
       class: 'bar-img',
       href: this.task.thumbnail,
-      clipPath: 'clip_' + this.task.id,
+      clipPath: 'clip_' + this.task._id,
       append_to: this.bar_group
     });
   }
@@ -374,7 +374,7 @@ export default class Bar {
     });
     // update-thumbnail
     if (this.task.thumbnail) {
-      const $thumbnail = this.bar_group.querySelector('#rect_' + this.task.id);
+      const $thumbnail = this.bar_group.querySelector('#rect_' + this.task._id);
       const y = $.attr($thumbnail, 'y') * 1;
       $thumbnail.setAttribute('y', y + offset);
     }
