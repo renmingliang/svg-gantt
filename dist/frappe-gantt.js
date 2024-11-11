@@ -1742,7 +1742,7 @@ var Gantt = (function () {
       if (index === undefined) {
         target = this.tasks.length; // default end
       } else if (typeof index === 'object') {
-        const tid = this.format_task_id(index.id);
+        const tid = this.format_task_id(index);
         target = this.tasks.findIndex((task) => task.id === tid);
         target += 1; // target task
       } else {
@@ -3010,7 +3010,6 @@ var Gantt = (function () {
         }
 
         bars = ids.map((id) => this.get_bar(id));
-
         this.bar_being_dragged = parent_bar_id;
 
         bars.forEach((bar) => {
