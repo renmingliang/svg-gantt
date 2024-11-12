@@ -440,9 +440,9 @@ export default class Gantt {
       if (this.options.lines !== TICK_LINE.VERTICAL) {
         createSVG('line', {
           x1: 0,
-          y1: insert_y,
+          y1: insert_y + row_height,
           x2: row_width,
-          y2: insert_y,
+          y2: insert_y + row_height,
           class: 'row-line',
           append_to: $lines_layer,
         });
