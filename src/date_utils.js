@@ -116,7 +116,7 @@ export default {
       m: values[4],
       s: values[5],
       SSS: values[6],
-      Q: parseInt((values[1] + 1) / 3) + 1,
+      Q: Math.floor(values[1] / 3) + 1,
       MMMM: month_name_capitalized,
       MMM: SHORTENED[month_name_capitalized] || month_name_capitalized,
     };
