@@ -517,7 +517,7 @@ export default class Gantt {
       this.options.step = 24 * 30;
       this.options.column_width = 280;
     } else if (view_mode === VIEW_MODE.QUARTER_YEAR) {
-      this.options.step = (24 * 365) / 4;
+      this.options.step = 24 * 90;
       this.options.column_width = 400;
     } else if (view_mode === VIEW_MODE.YEAR) {
       this.options.step = 24 * 365;
@@ -555,6 +555,12 @@ export default class Gantt {
     const today = date_utils.today();
     if (gantt_start > today) gantt_start = today;
     if (gantt_end < today) gantt_end = today;
+
+    // ensure start inside quarter_year
+    if (this.view_is(VIEW_MODE.QUARTER_YEAR)) {
+      const mon = Math.floor(gantt_start.getMonth() / 3) * 3;
+      gantt_start = new Date(gantt_start.setMonth(mon, 1));
+    }
 
     // pad date start and end
     this.pad_gantt_dates(gantt_start, gantt_end);
@@ -1060,11 +1066,11 @@ export default class Gantt {
 
   get_thick_mode(date) {
     let thick = false;
-    // thick tick for monday
+    // for day
     if (this.view_is(VIEW_MODE.DAY) && date.getDate() === 1) {
       thick = true;
     }
-    // thick tick for first week
+    // for first week
     if (
       this.view_is(VIEW_MODE.WEEK) &&
       date.getDate() >= 1 &&
@@ -1072,15 +1078,15 @@ export default class Gantt {
     ) {
       thick = true;
     }
-    // thick ticks for quarters
+    // for month
     if (this.view_is(VIEW_MODE.MONTH) && date.getMonth() % 3 === 0) {
       thick = true;
     }
-    // thick ticks for quarter_year
-    if (this.view_is(VIEW_MODE.QUARTER_YEAR) && date.getMonth() === 0) {
+    // for quarter_year
+    if (this.view_is(VIEW_MODE.QUARTER_YEAR) && Math.floor(date.getMonth() / 3) === 0) {
       thick = true;
     }
-    // thick ticks for year
+    // for year
     if (this.view_is(VIEW_MODE.YEAR)) {
       thick = true;
     }
@@ -1088,7 +1094,15 @@ export default class Gantt {
   }
 
   get_date_width(date) {
-    if (this.view_is(VIEW_MODE.MONTH)) {
+    if (this.view_is(VIEW_MODE.YEAR)) {
+      return (
+        (date_utils.get_days_in_year(date) * this.options.column_width) / 365
+      );
+    } else if (this.view_is(VIEW_MODE.QUARTER_YEAR)) {
+      return (
+        (date_utils.get_days_in_quarter_year(date) * this.options.column_width) / 90
+      );
+    } else if (this.view_is(VIEW_MODE.MONTH)) {
       return (
         (date_utils.get_days_in_month(date) * this.options.column_width) / 30
       );
@@ -1305,7 +1319,7 @@ export default class Gantt {
       Month_lower: column_width / 2,
       Month_upper: 19,
       'Quarter Year_lower': column_width / 2,
-      'Quarter Year_upper': (column_width * 4) / 2,
+      'Quarter Year_upper': column_width / 2,
       Year_lower: column_width / 2,
       Year_upper: 19,
     };
@@ -1964,6 +1978,10 @@ export default class Gantt {
     }
 
     return false;
+  }
+
+  get_list() {
+    return this.tasks;
   }
 
   get_task(id) {

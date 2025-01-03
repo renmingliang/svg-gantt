@@ -303,15 +303,6 @@ $handle-color: #dcdce4 !default;
   .subtitle {
     color: $popup-text-grey;
   }
-
-  .pointer {
-    display: none;
-    position: absolute;
-    height: 5px;
-    margin: 0 0 0 -5px;
-    border: 5px solid transparent;
-    border-bottom-color: rgba(0, 0, 0, 0.8);
-  }
 }
 
 .gantt-drag-backdrop {
@@ -345,5 +336,8 @@ $handle-color: #dcdce4 !default;
     justify-content: space-between;
     padding: 0 10px;
     box-sizing: border-box;
+    span:last-child {
+      text-align: right;
+    }
   }
 }

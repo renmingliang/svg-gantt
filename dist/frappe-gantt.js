@@ -30,30 +30,30 @@ var Gantt = (function () {
       const matches = regex.exec(duration);
 
       if (matches !== null) {
-        if (matches[2] === "y") {
+        if (matches[2] === 'y') {
           return { duration: parseInt(matches[1]), scale: `year` };
-        } else if (matches[2] === "m") {
+        } else if (matches[2] === 'm') {
           return { duration: parseInt(matches[1]), scale: `month` };
-        } else if (matches[2] === "d") {
+        } else if (matches[2] === 'd') {
           return { duration: parseInt(matches[1]), scale: `day` };
-        } else if (matches[2] === "h") {
+        } else if (matches[2] === 'h') {
           return { duration: parseInt(matches[1]), scale: `hour` };
-        } else if (matches[2] === "min") {
+        } else if (matches[2] === 'min') {
           return { duration: parseInt(matches[1]), scale: `minute` };
-        } else if (matches[2] === "s") {
+        } else if (matches[2] === 's') {
           return { duration: parseInt(matches[1]), scale: `second` };
-        } else if (matches[2] === "ms") {
+        } else if (matches[2] === 'ms') {
           return { duration: parseInt(matches[1]), scale: `millisecond` };
         }
       }
     },
-    parse(date, date_separator = "-", time_separator = /[.:]/) {
+    parse(date, date_separator = '-', time_separator = /[.:]/) {
       if (date instanceof Date) {
         return date;
       }
-      if (typeof date === "string") {
+      if (typeof date === 'string') {
         let date_parts, time_parts;
-        const parts = date.split(" ");
+        const parts = date.split(' ');
         date_parts = parts[0]
           .split(date_separator)
           .map((val) => parseInt(val, 10));
@@ -66,7 +66,7 @@ var Gantt = (function () {
 
         if (time_parts && time_parts.length) {
           if (time_parts.length === 4) {
-            time_parts[3] = "0." + time_parts[3];
+            time_parts[3] = '0.' + time_parts[3];
             time_parts[3] = parseFloat(time_parts[3]) * 1000;
           }
           vals = vals.concat(time_parts);
@@ -77,7 +77,7 @@ var Gantt = (function () {
 
     to_string(date, with_time = false) {
       if (!(date instanceof Date)) {
-        throw new TypeError("Invalid argument type");
+        throw new TypeError('Invalid argument type');
       }
       const vals = this.get_date_values(date).map((val, i) => {
         if (i === 1) {
@@ -86,20 +86,20 @@ var Gantt = (function () {
         }
 
         if (i === 6) {
-          return padStart(val + "", 3, "0");
+          return padStart(val + '', 3, '0');
         }
 
-        return padStart(val + "", 2, "0");
+        return padStart(val + '', 2, '0');
       });
       const date_string = `${vals[0]}-${vals[1]}-${vals[2]}`;
       const time_string = `${vals[3]}:${vals[4]}:${vals[5]}.${vals[6]}`;
 
-      return date_string + (with_time ? " " + time_string : "");
+      return date_string + (with_time ? ' ' + time_string : '');
     },
 
-    format(date, format_string = "YYYY-MM-DD HH:mm:ss.SSS", lang = "en") {
+    format(date, format_string = 'YYYY-MM-DD HH:mm:ss.SSS', lang = 'en') {
       const dateTimeFormat = new Intl.DateTimeFormat(lang, {
-        month: "long",
+        month: 'long',
       });
       const month_name = dateTimeFormat.format(date);
       const month_name_capitalized =
@@ -154,8 +154,8 @@ var Gantt = (function () {
       months = days / 30;
       years = months / 12;
 
-      if (!scale.endsWith("s")) {
-        scale += "s";
+      if (!scale.endsWith('s')) {
+        scale += 's';
       }
 
       return Math.floor(
@@ -254,6 +254,21 @@ var Gantt = (function () {
         return 29;
       }
       return 28;
+    },
+
+    get_days_in_quarter_year(date) {
+      const quarter = Math.floor(date.getMonth() / 3) + 1;
+      let days = 0;
+      let start = (quarter - 1) * 3;
+      for (let index = start; index < 3 * quarter; index++) {
+        days += this.get_days_in_month(new Date(date.setMonth(index)));
+      }
+      return days;
+    },
+
+    get_days_in_year(date) {
+      const feb_date = date.setMonth(1);
+      return this.get_days_in_month(new Date(feb_date)) + 337;
     },
   };
 
@@ -633,13 +648,13 @@ var Gantt = (function () {
 
       animateSVG(this.$bar, "width", 0, this.width);
 
-      if (this._invalid) {
+      if (this.invalid) {
         this.$bar.classList.add("bar-invalid");
       }
     }
 
     draw_expected_progress_bar() {
-      if (this._invalid) return;
+      if (this.invalid) return;
       this.$expected_bar_progress = createSVG("rect", {
         x: this.x,
         y: this.y,
@@ -660,7 +675,7 @@ var Gantt = (function () {
     }
 
     draw_progress_bar() {
-      if (this._invalid) return;
+      if (this.invalid) return;
       this.$bar_progress = createSVG("rect", {
         x: this.x,
         y: this.y,
@@ -1255,14 +1270,12 @@ var Gantt = (function () {
       this.parent.innerHTML = `
         <div class="title"></div>
         <div class="subtitle"></div>
-        <div class="pointer"></div>
     `;
 
       this.hide();
 
       this.title = this.parent.querySelector(".title");
       this.subtitle = this.parent.querySelector(".subtitle");
-      this.pointer = this.parent.querySelector(".pointer");
     }
 
     show(options) {
@@ -1272,10 +1285,7 @@ var Gantt = (function () {
       const target_element = options.target_element;
 
       if (typeof this.custom_html === 'function') {
-        let html = this.custom_html(options.task);
-        html += '<div class="pointer"></div>';
-        this.parent.innerHTML = html;
-        this.pointer = this.parent.querySelector(".pointer");
+        this.parent.innerHTML = this.custom_html(options.task);
       } else {
         // set data
         this.title.innerHTML = options.title;
@@ -1289,6 +1299,10 @@ var Gantt = (function () {
       } else if (target_element instanceof SVGElement) {
         position_meta = target_element.getBBox();
       }
+
+      this.parent.style.display = "block";
+      this.parent.style.visibility = "hidden";
+
       const parentWidth = this.parent.clientWidth;
       const parentHeight = this.parent.clientHeight;
       const ganttOptions = this.gantt.options;
@@ -1316,21 +1330,20 @@ var Gantt = (function () {
       }
 
       if (pos_x < 0) {
-        pos_x = 2;
+        pos_x = 5;
       }
 
       this.parent.style.left = pos_x + "px";
       this.parent.style.top = pos_y + "px";
 
-      this.pointer.style.left = parentWidth / 2 + 'px';
-      this.pointer.style.top = "-15px";
-
       // show
       this.parent.style.display = "block";
+      this.parent.style.visibility = 'visible';
     }
 
     hide() {
       this.parent.style.display = "none";
+      this.parent.style.visibility = 'hidden';
       this.parent.style.left = 0;
     }
   }
@@ -1885,7 +1898,7 @@ var Gantt = (function () {
         this.options.step = 24 * 30;
         this.options.column_width = 280;
       } else if (view_mode === VIEW_MODE.QUARTER_YEAR) {
-        this.options.step = (24 * 365) / 4;
+        this.options.step = 24 * 90;
         this.options.column_width = 400;
       } else if (view_mode === VIEW_MODE.YEAR) {
         this.options.step = 24 * 365;
@@ -1923,6 +1936,12 @@ var Gantt = (function () {
       const today = date_utils.today();
       if (gantt_start > today) gantt_start = today;
       if (gantt_end < today) gantt_end = today;
+
+      // ensure start inside quarter_year
+      if (this.view_is(VIEW_MODE.QUARTER_YEAR)) {
+        const mon = Math.floor(gantt_start.getMonth() / 3) * 3;
+        gantt_start = new Date(gantt_start.setMonth(mon, 1));
+      }
 
       // pad date start and end
       this.pad_gantt_dates(gantt_start, gantt_end);
@@ -2427,11 +2446,11 @@ var Gantt = (function () {
 
     get_thick_mode(date) {
       let thick = false;
-      // thick tick for monday
+      // for day
       if (this.view_is(VIEW_MODE.DAY) && date.getDate() === 1) {
         thick = true;
       }
-      // thick tick for first week
+      // for first week
       if (
         this.view_is(VIEW_MODE.WEEK) &&
         date.getDate() >= 1 &&
@@ -2439,15 +2458,15 @@ var Gantt = (function () {
       ) {
         thick = true;
       }
-      // thick ticks for quarters
+      // for month
       if (this.view_is(VIEW_MODE.MONTH) && date.getMonth() % 3 === 0) {
         thick = true;
       }
-      // thick ticks for quarter_year
-      if (this.view_is(VIEW_MODE.QUARTER_YEAR) && date.getMonth() === 0) {
+      // for quarter_year
+      if (this.view_is(VIEW_MODE.QUARTER_YEAR) && Math.floor(date.getMonth() / 3) === 0) {
         thick = true;
       }
-      // thick ticks for year
+      // for year
       if (this.view_is(VIEW_MODE.YEAR)) {
         thick = true;
       }
@@ -2455,7 +2474,15 @@ var Gantt = (function () {
     }
 
     get_date_width(date) {
-      if (this.view_is(VIEW_MODE.MONTH)) {
+      if (this.view_is(VIEW_MODE.YEAR)) {
+        return (
+          (date_utils.get_days_in_year(date) * this.options.column_width) / 365
+        );
+      } else if (this.view_is(VIEW_MODE.QUARTER_YEAR)) {
+        return (
+          (date_utils.get_days_in_quarter_year(date) * this.options.column_width) / 90
+        );
+      } else if (this.view_is(VIEW_MODE.MONTH)) {
         return (
           (date_utils.get_days_in_month(date) * this.options.column_width) / 30
         );
@@ -2672,7 +2699,7 @@ var Gantt = (function () {
         Month_lower: column_width / 2,
         Month_upper: 19,
         'Quarter Year_lower': column_width / 2,
-        'Quarter Year_upper': (column_width * 4) / 2,
+        'Quarter Year_upper': column_width / 2,
         Year_lower: column_width / 2,
         Year_upper: 19,
       };
@@ -3331,6 +3358,10 @@ var Gantt = (function () {
       }
 
       return false;
+    }
+
+    get_list() {
+      return this.tasks;
     }
 
     get_task(id) {

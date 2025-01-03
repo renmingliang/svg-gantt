@@ -109,13 +109,13 @@ export default class Bar {
 
     animateSVG(this.$bar, "width", 0, this.width);
 
-    if (this._invalid) {
+    if (this.invalid) {
       this.$bar.classList.add("bar-invalid");
     }
   }
 
   draw_expected_progress_bar() {
-    if (this._invalid) return;
+    if (this.invalid) return;
     this.$expected_bar_progress = createSVG("rect", {
       x: this.x,
       y: this.y,
@@ -136,7 +136,7 @@ export default class Bar {
   }
 
   draw_progress_bar() {
-    if (this._invalid) return;
+    if (this.invalid) return;
     this.$bar_progress = createSVG("rect", {
       x: this.x,
       y: this.y,

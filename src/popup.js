@@ -10,14 +10,12 @@ export default class Popup {
     this.parent.innerHTML = `
         <div class="title"></div>
         <div class="subtitle"></div>
-        <div class="pointer"></div>
     `;
 
     this.hide();
 
     this.title = this.parent.querySelector(".title");
     this.subtitle = this.parent.querySelector(".subtitle");
-    this.pointer = this.parent.querySelector(".pointer");
   }
 
   show(options) {
@@ -27,10 +25,7 @@ export default class Popup {
     const target_element = options.target_element;
 
     if (typeof this.custom_html === 'function') {
-      let html = this.custom_html(options.task);
-      html += '<div class="pointer"></div>';
-      this.parent.innerHTML = html;
-      this.pointer = this.parent.querySelector(".pointer");
+      this.parent.innerHTML = this.custom_html(options.task);
     } else {
       // set data
       this.title.innerHTML = options.title;
@@ -44,6 +39,10 @@ export default class Popup {
     } else if (target_element instanceof SVGElement) {
       position_meta = target_element.getBBox();
     }
+
+    this.parent.style.display = "block";
+    this.parent.style.visibility = "hidden";
+
     const parentWidth = this.parent.clientWidth;
     const parentHeight = this.parent.clientHeight;
     const ganttOptions = this.gantt.options;
@@ -71,21 +70,20 @@ export default class Popup {
     }
 
     if (pos_x < 0) {
-      pos_x = 2
+      pos_x = 5
     }
 
     this.parent.style.left = pos_x + "px";
     this.parent.style.top = pos_y + "px";
 
-    this.pointer.style.left = parentWidth / 2 + 'px';
-    this.pointer.style.top = "-15px";
-
     // show
     this.parent.style.display = "block";
+    this.parent.style.visibility = 'visible';
   }
 
   hide() {
     this.parent.style.display = "none";
+    this.parent.style.visibility = 'hidden';
     this.parent.style.left = 0;
   }
 }

@@ -27,30 +27,30 @@ export default {
     const matches = regex.exec(duration);
 
     if (matches !== null) {
-      if (matches[2] === "y") {
+      if (matches[2] === 'y') {
         return { duration: parseInt(matches[1]), scale: `year` };
-      } else if (matches[2] === "m") {
+      } else if (matches[2] === 'm') {
         return { duration: parseInt(matches[1]), scale: `month` };
-      } else if (matches[2] === "d") {
+      } else if (matches[2] === 'd') {
         return { duration: parseInt(matches[1]), scale: `day` };
-      } else if (matches[2] === "h") {
+      } else if (matches[2] === 'h') {
         return { duration: parseInt(matches[1]), scale: `hour` };
-      } else if (matches[2] === "min") {
+      } else if (matches[2] === 'min') {
         return { duration: parseInt(matches[1]), scale: `minute` };
-      } else if (matches[2] === "s") {
+      } else if (matches[2] === 's') {
         return { duration: parseInt(matches[1]), scale: `second` };
-      } else if (matches[2] === "ms") {
+      } else if (matches[2] === 'ms') {
         return { duration: parseInt(matches[1]), scale: `millisecond` };
       }
     }
   },
-  parse(date, date_separator = "-", time_separator = /[.:]/) {
+  parse(date, date_separator = '-', time_separator = /[.:]/) {
     if (date instanceof Date) {
       return date;
     }
-    if (typeof date === "string") {
+    if (typeof date === 'string') {
       let date_parts, time_parts;
-      const parts = date.split(" ");
+      const parts = date.split(' ');
       date_parts = parts[0]
         .split(date_separator)
         .map((val) => parseInt(val, 10));
@@ -63,7 +63,7 @@ export default {
 
       if (time_parts && time_parts.length) {
         if (time_parts.length === 4) {
-          time_parts[3] = "0." + time_parts[3];
+          time_parts[3] = '0.' + time_parts[3];
           time_parts[3] = parseFloat(time_parts[3]) * 1000;
         }
         vals = vals.concat(time_parts);
@@ -74,7 +74,7 @@ export default {
 
   to_string(date, with_time = false) {
     if (!(date instanceof Date)) {
-      throw new TypeError("Invalid argument type");
+      throw new TypeError('Invalid argument type');
     }
     const vals = this.get_date_values(date).map((val, i) => {
       if (i === 1) {
@@ -83,20 +83,20 @@ export default {
       }
 
       if (i === 6) {
-        return padStart(val + "", 3, "0");
+        return padStart(val + '', 3, '0');
       }
 
-      return padStart(val + "", 2, "0");
+      return padStart(val + '', 2, '0');
     });
     const date_string = `${vals[0]}-${vals[1]}-${vals[2]}`;
     const time_string = `${vals[3]}:${vals[4]}:${vals[5]}.${vals[6]}`;
 
-    return date_string + (with_time ? " " + time_string : "");
+    return date_string + (with_time ? ' ' + time_string : '');
   },
 
-  format(date, format_string = "YYYY-MM-DD HH:mm:ss.SSS", lang = "en") {
+  format(date, format_string = 'YYYY-MM-DD HH:mm:ss.SSS', lang = 'en') {
     const dateTimeFormat = new Intl.DateTimeFormat(lang, {
-      month: "long",
+      month: 'long',
     });
     const month_name = dateTimeFormat.format(date);
     const month_name_capitalized =
@@ -151,8 +151,8 @@ export default {
     months = days / 30;
     years = months / 12;
 
-    if (!scale.endsWith("s")) {
-      scale += "s";
+    if (!scale.endsWith('s')) {
+      scale += 's';
     }
 
     return Math.floor(
@@ -251,6 +251,21 @@ export default {
       return 29;
     }
     return 28;
+  },
+
+  get_days_in_quarter_year(date) {
+    const quarter = Math.floor(date.getMonth() / 3) + 1;
+    let days = 0;
+    let start = (quarter - 1) * 3;
+    for (let index = start; index < 3 * quarter; index++) {
+      days += this.get_days_in_month(new Date(date.setMonth(index)));
+    }
+    return days;
+  },
+
+  get_days_in_year(date) {
+    const feb_date = date.setMonth(1);
+    return this.get_days_in_month(new Date(feb_date)) + 337;
   },
 };
 

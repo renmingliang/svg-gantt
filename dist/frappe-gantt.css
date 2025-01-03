@@ -56,9 +56,6 @@
 .dark > .gantt-container .gantt-popup-wrapper .title {
   border-color: #a4a4ff;
 }
-.dark > .gantt-container .gantt-popup-wrapper .pointer {
-  border-top-color: #333;
-}
 
 .gantt-container {
   position: relative;
@@ -279,14 +276,6 @@
 .gantt-popup-wrapper .subtitle {
   color: #98A1A9;
 }
-.gantt-popup-wrapper .pointer {
-  display: none;
-  position: absolute;
-  height: 5px;
-  margin: 0 0 0 -5px;
-  border: 5px solid transparent;
-  border-bottom-color: rgba(0, 0, 0, 0.8);
-}
 
 .gantt-drag-backdrop {
   position: absolute;
@@ -318,4 +307,7 @@
   justify-content: space-between;
   padding: 0 10px;
   box-sizing: border-box;
+}
+.gantt-drag-backdrop .date-range span:last-child {
+  text-align: right;
 }
