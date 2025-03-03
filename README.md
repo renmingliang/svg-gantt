@@ -1,3 +1,4 @@
+### TKS
 <div align="center">
     <p>Thanks To Frappe Gantt</p>
     <a href="https://frappe.github.io/gantt">
@@ -5,15 +6,13 @@
     </a>
 </div>
 
-### Contributing
-
-If you want to contribute enhancements or fixes:
+### step
 
 1. Clone this repo.
 2. `cd` into project directory
 3. `yarn`
 4. `yarn run dev`
-5. Open `index.html` in your browser, make your code changes and test them.
+5. Open `index.html` in your browser
 
 ### insert
 1. 插入tasks，更新索引_index 及其 dependencies
@@ -38,7 +37,3 @@ If you want to contribute enhancements or fixes:
 8. 无tasks数据时，空绘制；
 9. 动态权限控制，readonly；
 10. 拖拽超限 this.gantt_start 与 this.gantt_end，更新画布；
-
-### TODO
-1. 点击创建Bar后，make_arrows可动态创建；
-2. date-change，事件回调日期格式化 hour，导致结束时间返回23:00:00；
