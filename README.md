@@ -6,7 +6,7 @@
     </a>
 </div>
 
-### step
+### Step
 
 1. Clone this repo.
 2. `cd` into project directory
@@ -14,7 +14,7 @@
 4. `yarn run dev`
 5. Open `index.html` in your browser
 
-### insert
+### Insert
 1. 插入tasks，更新索引_index 及其 dependencies
 2. 更新日期 gantt_start、gantt_end -- 重绘
 3. 插入grid-row
