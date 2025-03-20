@@ -60,4 +60,8 @@ var tasks = [
 ];
 
 // Uncomment to test fixed header
-// tasks = [...tasks, ...Array.from({length: tasks.length * 3}, (_, i) => ({...tasks[i % 3], id: i}))]
+tasks = [
+  ...tasks,
+  ...Array.from({ length: tasks.length * 300 }, (_, i) =>
+    (Object.assign({}, tasks[i % 3], { id: `Task ${i}` })))
+];

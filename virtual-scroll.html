@@ -1,0 +1,139 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Virtual Scroll</title>
+    <style>
+      .container {
+        margin: auto;
+        width: 500px;
+        height: 385px;
+        border: 1px solid #000;
+        background: pink;
+        overflow-y: scroll;
+        position: relative;
+      }
+
+      .content {
+        margin: 0;
+        padding: 0;
+        position: absolute;
+        left: 0;
+        right: 0;
+        top: 0;
+        bottom: 0;
+        z-index: 2;
+      }
+
+      .content li {
+        padding: 0 10px;
+        line-height: 44px;
+        border-bottom: 1px solid #f40;
+        list-style: none;
+      }
+    </style>
+  </head>
+  <body>
+    <h1 style="text-align: center">Virtual Scroll In Container</h1>
+    <div class="container"></div>
+
+    <script>
+      class VirtualScroll {
+        constructor(container, otpions) {
+          this.container = container;
+
+          const { count, height, threshold } = otpions;
+          this.count = count;
+          this.height = height;
+          this.threshold = threshold || 0;
+
+          this.screen_count = Math.ceil(container.clientHeight / height) + threshold;
+          this.start = 0;
+          this.end = this.screen_count;
+          this.lastTop = 0;
+          this.ticking = false;
+
+          this.init();
+        }
+
+        init() {
+          this.content = document.createElement('ul');
+          this.content.classList.add('content');
+          this.container.appendChild(this.content);
+
+          const virtualChild = document.createElement('div');
+          virtualChild.style.height = this.height * this.count + 'px';
+          this.container.appendChild(virtualChild);
+
+          this.container.addEventListener('scroll', () => {
+            if (!this.ticking) {
+              window.requestAnimationFrame(() => {
+                this.onScroll();
+                this.ticking = false;
+              });
+              this.ticking = true;
+            }
+          });
+
+          this.render();
+        }
+
+        render() {
+          const fragment = document.createDocumentFragment();
+          for (let i = this.start; i < this.end; i++) {
+            const li = document.createElement('li');
+            li.innerHTML = '第' + (i + 1) + '条';
+            fragment.appendChild(li);
+          }
+          this.content.innerHTML = '';
+          this.content.appendChild(fragment);
+          this.content.style.transform = `translateY(${this.start * this.height}px)`;
+        }
+
+        onScroll() {
+          const scrollTop = this.container.scrollTop;
+          let newStart = Math.floor(scrollTop / this.height);
+
+          if (scrollTop - this.lastTop > 0) {
+            // scroll-to down
+            this.lastTop = scrollTop;
+            if (newStart < (this.end - (this.screen_count - this.threshold))) return;
+          } else {
+            // scroll-to up
+            this.lastTop = scrollTop;
+            if (this.start <= newStart && newStart <= (this.start + this.threshold)) return;
+
+            // recalculate base start
+            if (newStart + 1 === this.start) {
+              newStart = this.start - this.threshold;
+            }
+          }
+
+          this.start = newStart;
+          this.end = this.start + this.screen_count;
+
+          if (this.start < 0) {
+            this.start = 0;
+            this.end = this.screen_count;
+          }
+          if (this.end > this.count) {
+            this.end = this.count;
+            this.start = this.end - this.screen_count;
+          }
+
+          this.render();
+        }
+      }
+
+      document.addEventListener('DOMContentLoaded', () => {
+        const container = document.querySelector('.container');
+        const threshold = 20; // offset size
+        const count = 2140; // data size
+        const height = 44 + 1; // cell height
+
+        new VirtualScroll(container, { count, height, threshold });
+      });
+    </script>
+  </body>
+</html>

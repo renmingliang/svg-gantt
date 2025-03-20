@@ -14,26 +14,16 @@
 4. `yarn run dev`
 5. Open `index.html` in your browser
 
-### Insert
-1. 插入tasks，更新索引_index 及其 dependencies
-2. 更新日期 gantt_start、gantt_end -- 重绘
-3. 插入grid-row
-4. 插入lines_layer
-5. 插入bars
-6. 重绘arrows
-7. 修改高度 grid-background、svg.gantt、today-highlight
-8. 修改holiday-highlight -- height=100%
-9. 修改tick -- height=5000(设定无限大)
-
-
 ### Feature
-1. 支持季度；
+1. 支持多维度(Hour、Quarter Day、Half Day、Day、Week、Month、Quarter Year、Year)；
 2. 局部更新数据，添加or删除；
-3. 点击绘制Bar；
-4. 限制容器高度滚动；
-5. view_mode_padding - 存在数据日期情况下，生效；若未有效，则设置默认值长度；
+3. 鼠标点击空白区域绘制Bar；
+4. 支持限制容器高度滚动；
+5. view_mode_padding - 数据两端阀值；
 6. today - scrollTo 日期1/3位置显示；
-7. 未设置开始时间 or 结束时间 -> 相应变更对于时间点 才更新；
-8. 无tasks数据时，空绘制；
-9. 动态权限控制，readonly；
-10. 拖拽超限 this.gantt_start 与 this.gantt_end，更新画布；
+7. 未设置开始时间 or 结束时间，补全时间段(假定2天)；
+8. 动态权限控制，readonly；
+9. 支持拖拽超限 this.gantt_start 与 this.gantt_end，更新画布；
+
+### Todo
+1. virtual scroll；
